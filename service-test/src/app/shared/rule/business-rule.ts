@@ -125,6 +125,7 @@ export class BusinessRulePart {
 }
 
 export interface IBusinessRuleData {
+    initialise(): void;
     getValue( name: string ): any;
 }
 

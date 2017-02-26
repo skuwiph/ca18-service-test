@@ -5,8 +5,10 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 
+import { BusinessRuleService } from './shared/rule/business-rule.service';
 import { ApplicationService } from './shared/application/application.service';
 import { TrackerService } from './shared/tracker/tracker.service';
+import { MetaformService } from './shared/metaform/metaform.service';
 
 @NgModule({
   declarations: [
@@ -18,8 +20,11 @@ import { TrackerService } from './shared/tracker/tracker.service';
       HttpModule
   ],
   providers: [ 
+      HttpModule,
+      BusinessRuleService,
       ApplicationService,
-      TrackerService
+      TrackerService,
+      MetaformService
   ],
   bootstrap: [AppComponent]
 })

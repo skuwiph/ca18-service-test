@@ -6,6 +6,12 @@ import { BusinessRule, BusinessRulePart, RuleComparison, RuleMatchType, IBusines
 
 class DataSourceForTest implements IBusinessRuleData {
     constructor( ){}
+
+    // In the actual implementation, we would be getting the data now
+    initialise(): void {
+
+    }
+
     public getValue( name: string ) : any {
         if ( name === 'string' ) return 'test';
         
@@ -58,14 +64,16 @@ describe('BusinessRuleService', () => {
     }));      
 
     it('should disallow duplicate rules names...', inject([BusinessRuleService], (service: BusinessRuleService) => {
-        allRules.push( createStringRule() );
-        expect( function() { service.setRules(allRules); } ).toThrow( new Error("BusinessRule: The rule 'Test String Rule' already exists in this ruleset!") ;
+        var duplicateRules: BusinessRule[] = allRules.slice(); // Must copy by value 
+        duplicateRules.push( createStringRule() );
+        expect( function() { service.setRules(duplicateRules); } ).toThrow( new Error("BusinessRule: The rule 'Test String Rule' already exists in this ruleset!") ;
     }));  
 
     it('should evaluate a valid MatchALL string rule...', inject([BusinessRuleService], (service: BusinessRuleService) => {
         service.setRules(allRules);
         expect(service.evaluateRule("Test String Rule MatchType ALL", testData)).toBeTruthy();
     }));  
+
             
 });
 
