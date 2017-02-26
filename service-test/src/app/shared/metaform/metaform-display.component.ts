@@ -11,7 +11,7 @@ import { MfQuestion }              from './metaform';
 // TODO(ian): add the inividual displays for each component question
 
 @Component({
-    moduleId: module.id,
+    // moduleId: module.id,
     selector: 'app-metaform-display',
     templateUrl: './metaform-display.component.html',
     styleUrls: ['./metaform-display.component.css']

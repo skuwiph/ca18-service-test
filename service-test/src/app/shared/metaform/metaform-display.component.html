@@ -4,7 +4,7 @@
     <div>
       <form (ngSubmit)="onSubmit()" [formGroup]="form">
         <div *ngFor="let question of questions" class="form-row">
-          <mf-question [question]="question" [form]="form"></df-question>
+          <mf-question [questions]="question" [form]="form"></mf-question>
         </div>
         <¬-- TODO(ian): update tracker buttons -->
         <div class="form-row">
