@@ -30,10 +30,15 @@ export class MetaformDisplayComponent implements OnInit {
 
     ngOnInit() {
         console.log("MetaformDisplayComponent");
-        this.form = this.formService.toFormGroup( this.formService.loadForm(this.formName) );
+        // if( this.formName ) {
+        //     let metaform = this.formService.loadForm(this.formName) ;
+        //     if( metaform ) {
+        //         this.form = this.formService.toFormGroup( metaform );
+        //     }
+        // }
     }
 
     onSubmit() {
-        this.payLoad = JSON.stringify(this.form.value);
+        // this.payLoad = JSON.stringify(this.form.value);
     }
 }

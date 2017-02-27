@@ -12,12 +12,16 @@ export class MetaformService {
 	// TODO(ian) and http service eventually
 	constructor(
 		private http: Http, 
-		private ruleService: BusinessRuleService) { }
+		private ruleService: BusinessRuleService) { 
+
+        }
 
 	loadForm( name: string ) : Metaform {
 		// First, check localStorage, and then check to see whether there's a newer version on the server
 		let form;
 		let updatedVersionAvailable = false;
+
+        console.log(`loadForm ${name}`);
 
 		if( localStorage.getItem(`mf:${name}`) ) {
 			form =  JSON.parse( localStorage.getItem(`mf:${name}`) );
@@ -38,6 +42,10 @@ export class MetaformService {
 	}
 
 	toFormGroup( form: Metaform ) : FormGroup {
+        if( form === undefined ) {
+            throw new Error(`The form was not loaded prior to calling this method!`);
+        }
+
 		let group: any = {};
 		let questions:MfQuestion<any>[] = form.questions;
 		

@@ -10,5 +10,5 @@ import { MfQuestion } from './metaform';
 export class MetaformQuestionDisplayComponent {
   @Input() question: MfQuestion<any>;
   @Input() form: FormGroup;
-  get isValid() { return this.form.controls[this.question.key].valid; }
+  get isValid() { return false; } // return this.form.controls[this.question.key].valid; }
 }
