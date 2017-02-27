@@ -1,16 +1,19 @@
 import { BusinessRule } from '../rule/business-rule';
 
+export class ApplicationSequence {
+    sequence: TrackerSequence[];
+}
+
 export class TrackerSequence {
     // Sequence Id
     id: number;
+
+    complete: boolean;
+
     title: string;
     ruleToMatch: string; 
     type: TrackerSequenceType;
     steps: SequenceStep[];
-
-    // TODO(ian): figure out what we need to do for routes
-    // with replacements in
-    routerUrl: string;
 
     // If step is a metaform?
     metaformName?: string;
@@ -25,13 +28,15 @@ export class TrackerSequence {
         this.steps = [];    
     }
 
-    
 }
 
 export class SequenceStep {
     // Step Id
     id: number;
 
+    // TODO(ian): figure out what we need to do for routes
+    // with replacements in
+    routerUrl?: string;
 }
 
 export enum TrackerSequenceType {
