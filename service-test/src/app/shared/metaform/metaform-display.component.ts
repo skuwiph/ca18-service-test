@@ -29,7 +29,7 @@ export class MetaformDisplayComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        console.log("MetaformDisplayComponent");
+        // console.log("MetaformDisplayComponent");
         // if( this.formName ) {
         //     let metaform = this.formService.loadForm(this.formName) ;
         //     if( metaform ) {

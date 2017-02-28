@@ -12,6 +12,8 @@ export class BusinessRuleService {
 
     }
     evaluateRule( name: string, data: any ) : boolean {
+        // console.log(`Evaluate rule ${name}`);
+
         let r: BusinessRule = this.getRuleByName( name );
 
         return r.isTrue( data );

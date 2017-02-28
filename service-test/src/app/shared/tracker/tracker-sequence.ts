@@ -11,7 +11,7 @@ export class TrackerSequence {
     complete: boolean;
 
     title: string;
-    ruleToMatch: string; 
+    ruleToMatch?: string; 
     type: TrackerSequenceType;
     steps: SequenceStep[];
 
@@ -33,10 +33,15 @@ export class TrackerSequence {
 export class SequenceStep {
     // Step Id
     id: number;
+    complete: boolean;
 
+    // Are there any rules?
+    ruleToMatch?: string; 
+    
     // TODO(ian): figure out what we need to do for routes
     // with replacements in
-    routerUrl?: string;
+    routerUrl?: any[];
+
 }
 
 export enum TrackerSequenceType {
