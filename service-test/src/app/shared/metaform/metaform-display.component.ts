@@ -36,12 +36,17 @@ export class MetaformDisplayComponent implements OnInit {
         console.log("MetaformDisplayComponent");
         console.debug(`Route Params: ${this.route.params['formName']}`);
 
-        this.route.params
-            .switchMap((params: Params) => this.formService.loadForm(params['formName']))
-            .subscribe((f: Metaform) => this.form = f);
+        this.formName = this.route.params['formName'];
 
-        this.formName = this.route.snapshot.params['formName'];
+        this.form = this.formService.loadForm(this.formName);
+
+        // TODO(ian): The formService needs to know how many questions to
+        // export at a time, based on the screen/viewport width.
+
+        // Also, we need to determine what 'page' we are on, since that
+        // will determine where we start outputting from.
         this.formGroup = this.formService.toFormGroup(this.form);
+        //this.questions = this.formGroup
     }
 
     onSubmit() {

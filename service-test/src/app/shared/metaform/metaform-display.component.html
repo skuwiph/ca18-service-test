@@ -1,7 +1,8 @@
 <h1>Metaform</h1>
 <p>Name: {{ formName }}</p>
-<!--<div>
     <form (ngSubmit)="onSubmit()"> [formGroup]="form">
+    </form>
+<!--<div>
         <div *ngFor="let question of questions" class="form-row">
             <mf-question [questions]="question" [form]="form"></mf-question>
         </div>
@@ -9,7 +10,6 @@
         <div class="form-row">
             <button type="submit" [disabled]="!form.valid">Save</button>
         </div>
-    </form>
     <div *ngIf="payLoad" class="form-row">
         <strong>Saved the following values</strong><br>{payLoad}
     </div>

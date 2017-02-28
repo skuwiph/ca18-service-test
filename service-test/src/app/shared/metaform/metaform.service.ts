@@ -19,7 +19,7 @@ export class MetaformService {
 		private ruleService: BusinessRuleService
     ) {}
 
-	loadForm( name: string ) : Observable<Metaform> {
+	loadForm( name: string ) : Metaform {
 		// First, check localStorage, and then check to see whether there's a newer version on the server
 		let form;
 		let updatedVersionAvailable = false;
@@ -41,7 +41,7 @@ export class MetaformService {
 
 		localStorage.setItem(`mf:${name}`, form);
 
-		return new Subject<form>.asObservable();
+		return form;
 	}
 
 	toFormGroup( form: Metaform ) : FormGroup {
