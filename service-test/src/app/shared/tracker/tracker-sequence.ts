@@ -1,7 +1,12 @@
 import { BusinessRule } from '../rule/business-rule';
 
 export class ApplicationSequence {
+    // The default sequence required
     sequence: TrackerSequence[];
+
+    // If we have override sequence(s), they should go here.
+    // This may be updated via a push service so we're always up-to-date
+    prioritySequenceId: number[];
 }
 
 export class TrackerSequence {

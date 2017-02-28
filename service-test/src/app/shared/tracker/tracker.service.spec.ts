@@ -80,6 +80,23 @@ describe('TrackerService', () => {
         expect(service.findFirstMatchingSequence(sequence, allRules, testData).id == 2).toBeTruthy();
     }));
 
+    it('should return the first override sequence if one exists', inject([TrackerService], (service: TrackerService) => {
+        let sequence = service.loadSequenceForApplication(1, true);
+        sequence.prioritySequenceId = [3];
+        expect(service.findFirstMatchingSequence(sequence, allRules, testData).id == 3).toBeTruthy();
+    }));
+
+    it('should remove the first override sequence if it is marked as complete', inject([TrackerService], (service: TrackerService) => {
+        let appSeq = service.loadSequenceForApplication(1, true);
+        appSeq.prioritySequenceId = [3];
+        let seq = service.findFirstMatchingSequence(appSeq, allRules, testData);
+
+        // Mark as complete
+        service.markSequenceComplete( appSeq, seq );
+
+        expect( appSeq.prioritySequenceId.length == 0 ).toBeTruthy();
+    }));
+
     it('should find the first matching step',
         inject([Router, TrackerService], (router: Router, service: TrackerService) => { // ...
         let appsequence = service.loadSequenceForApplication(1, true);

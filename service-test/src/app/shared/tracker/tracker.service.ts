@@ -17,14 +17,25 @@ export class TrackerService {
         private http: Http,
         private ruleService: BusinessRuleService,
         private formService: MetaformService
-        ) { 
+    ) { 
 
+    }
+
+
+    // NOTE(ian): return sequence for application
+    // NOTE(ian): should be stored in localStorage
+    loadSequenceForApplication(applicationId: number, forceRead?: boolean) : ApplicationSequence {
+        // console.log(`Read sequence for application ${applicationId}`);
+
+        let seq = this.getSequenceFromStorage();
+        if( seq === null || forceRead ) {
+            seq = this.sequence;
+
+            // Write to localStorage
+            localStorage.setItem("Seq", JSON.stringify(seq));
         }
 
-    navigateToStep( sequence: TrackerSequence, step: SequenceStep, router: Router ) : void {
-        // TODO(ian): Add router information in too
-        // console.log(`navigateToStep: routerUrl is ${step.routerUrl}`);
-        router.navigate( step.routerUrl );
+        return seq;
     }
 
     // NOTE(ian): Given we have a set of sequences, which one should
@@ -33,34 +44,35 @@ export class TrackerService {
         //let seq = this.getSequenceFromStorage();
         let matchingSequence: TrackerSequence;
         if( applicationSequence === null || applicationSequence.sequence === null ) {
-                // console.error(`ApplicationSequence.sequence is null!`);
-                return null;
+            return null;
         }
 
         this.ruleService.setRules(rules);
+        let overrideSequence = 0;
+
+        // There may be a priority override!
+        if( applicationSequence.prioritySequenceId.length > 0) {
+            overrideSequence = applicationSequence.prioritySequenceId[0];
+        }
 
         for(let s of applicationSequence.sequence ) {
-            if( !s.complete ) {
-                // console.log(`Sequence ${s.id} is not complete`);
-                // console.log(`Rule: "${s.ruleToMatch}"`);
+            // TODO(ian): We may still need to check that any rule still applies
+            // in case the user has updated something since we received the priority override
+            if( s.id == overrideSequence && !s.complete )  {
+                matchingSequence = s;
+                break;
+            }
 
+            if( overrideSequence == 0 && !s.complete ) {
                 if( s.ruleToMatch !== undefined ) {
-                    // console.log(`We have rule "${s.ruleToMatch}" to match...`);
-
                     if( this.ruleService.evaluateRule( s.ruleToMatch, data) ) {
-                        // console.log(`Rule "${s.ruleToMatch}" did!`);
                         matchingSequence = s;
                         break;
-                    // } else {
-                    //     console.log(`Rule "${s.ruleToMatch}" did not match, finding next!`);
                     }
                 } else {
-                    // console.log("We don't have a rule to match so we're taking this one");
                     matchingSequence = s;
                     break;
                 }
-            // } else {
-            //     console.log(`Sequence ${s.id} is complete already`);
             }
         }
 
@@ -74,7 +86,6 @@ export class TrackerService {
             this.ruleService.setRules(rules);
             for(let step of sequence.steps) {
                 if( !step.complete) {
-                    // console.log(`Step ${step.id} is not complete`);
                     matchingStep = step;
                     break;
                 }
@@ -84,27 +95,22 @@ export class TrackerService {
         return matchingStep;
     }
 
+    navigateToStep( sequence: TrackerSequence, step: SequenceStep, router: Router ) : void {
+        router.navigate( step.routerUrl );
+    }
 
-    // NOTE(ian): return sequence for application
-    // NOTE(ian): should be stored in localStorage
-    loadSequenceForApplication(applicationId: number, forceRead?: boolean) : ApplicationSequence {
-        // console.log(`Read sequence for application ${applicationId}`);
+    markSequenceComplete( applicationSequence: ApplicationSequence, sequence: TrackerSequence ) {
+        // Mark as completed
+        sequence.complete = true;
 
-        let seq = this.getSequenceFromStorage();
-        if( seq === null || forceRead ) {
-            // if( forceRead )
-            //     console.log("Force a refresh of sequence");
-            // else
-            //     console.log("Sequence is not in local storage");
-
-            // read from http and wait for response
-            seq = this.sequence;
-
-            // Write to localStorage
-            localStorage.setItem("Seq", JSON.stringify(seq));
+        // Just in case
+        for( let step of sequence.steps ) {
+            step.complete = true;
         }
 
-        return seq;
+        // Check for existence in priority sequence; should always be element #0
+        if( applicationSequence.prioritySequenceId[0] == sequence.id )
+            applicationSequence.prioritySequenceId.shift();
     }
 
     private getSequenceFromStorage() : ApplicationSequence {
@@ -129,10 +135,8 @@ export class TrackerService {
         },
         {id: 3, complete: false, title: 'A second incomplete sequence item', type: TrackerSequenceType.Custom, ruleToMatch: 'Date Equality Rule', 
             steps: [
-                { id: 300, complete: false, routerUrl: ['sequence/page/:id']}
+                { id: 300, complete: false, routerUrl: ['sequence/page/1']}
             ]
         }
-        
-
-    ]};
+    ], prioritySequenceId: []};
 }

@@ -1,14 +1,16 @@
-<div>
-    <form (ngSubmit)="onSubmit()"> <!-- [formGroup]="form">-->
-        <!--<div *ngFor="let question of questions" class="form-row">
+<h1>Metaform</h1>
+<p>Name: {{ formName }}</p>
+<!--<div>
+    <form (ngSubmit)="onSubmit()"> [formGroup]="form">
+        <div *ngFor="let question of questions" class="form-row">
             <mf-question [questions]="question" [form]="form"></mf-question>
-        </div>-->
-        <¬-- TODO(ian): update tracker buttons -->
+        </div>
+        TODO(ian): update tracker buttons 
         <div class="form-row">
-            <!--<button type="submit" [disabled]="!form.valid">Save</button>-->
+            <button type="submit" [disabled]="!form.valid">Save</button>
         </div>
     </form>
     <div *ngIf="payLoad" class="form-row">
-        <strong>Saved the following values</strong><br><!-- {payLoad}-->
+        <strong>Saved the following values</strong><br>{payLoad}
     </div>
-</div>
+</div>-->

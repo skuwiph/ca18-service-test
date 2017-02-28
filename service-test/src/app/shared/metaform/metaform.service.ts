@@ -2,21 +2,24 @@ import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
+import 'rxjs/add/observable/throw';
+import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/map';
+
 import { BusinessRuleService } from '../rule/business-rule.service';
 import { Metaform, MfQuestion } from './metaform';
 
 @Injectable()
 export class MetaformService {
 
-	// Pass in business rule service
-	// TODO(ian) and http service eventually
 	constructor(
 		private http: Http, 
-		private ruleService: BusinessRuleService) { 
+		private ruleService: BusinessRuleService
+    ) {}
 
-        }
-
-	loadForm( name: string ) : Metaform {
+	loadForm( name: string ) : Observable<Metaform> {
 		// First, check localStorage, and then check to see whether there's a newer version on the server
 		let form;
 		let updatedVersionAvailable = false;
@@ -38,7 +41,7 @@ export class MetaformService {
 
 		localStorage.setItem(`mf:${name}`, form);
 
-		return form;
+		return new Subject<form>.asObservable();
 	}
 
 	toFormGroup( form: Metaform ) : FormGroup {

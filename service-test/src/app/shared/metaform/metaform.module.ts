@@ -1,14 +1,16 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { ReactiveFormsModule } from '@angular/forms';
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+
 import { MetaformDisplayComponent } from './metaform-display.component';
+
+import { routing } from './metaform.routing';
 
 @NgModule({
   imports: [
-    BrowserModule,
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    routing
   ],
   declarations: [MetaformDisplayComponent]
 })
