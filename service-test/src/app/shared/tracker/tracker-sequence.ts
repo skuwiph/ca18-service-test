@@ -25,6 +25,9 @@ export class TrackerSequence {
 
     // If step is custom?
 
+    // What's the next step to take
+    currentStep: number;
+
     constructor( id: number, title: string, ruleToMatch: string, type: TrackerSequenceType ) {
         this.id = id;
         this.title = title;
@@ -42,7 +45,10 @@ export class SequenceStep {
 
     // Are there any rules?
     ruleToMatch?: string; 
-    
+
+    // For metaform 'pages'
+    stepName?:string;
+
     // TODO(ian): figure out what we need to do for routes
     // with replacements in
     routerUrl?: any[];

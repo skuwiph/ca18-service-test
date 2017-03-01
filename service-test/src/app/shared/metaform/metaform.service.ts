@@ -9,7 +9,8 @@ import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 
 import { BusinessRuleService } from '../rule/business-rule.service';
-import { Metaform, MfQuestion } from './metaform';
+import { IBusinessRuleData } from '../rule/business-rule';
+import { Metaform, MfQuestion, Question, MfTextQuestion } from './metaform';
 
 @Injectable()
 export class MetaformService {
@@ -24,14 +25,17 @@ export class MetaformService {
 		let form;
 		let updatedVersionAvailable = false;
 
-        console.log(`loadForm ${name}`);
+        console.log(`loadForm '${name}'`);
 
 		if( localStorage.getItem(`mf:${name}`) ) {
+			console.log("localStorage has the form");
 			form =  JSON.parse( localStorage.getItem(`mf:${name}`) );
+			console.log(`Form is ${form.name}, check after ${form.checkModifiedAfter}`);
 		}
 
 		// Check version, but only if checkAfter is after now..
 		if( form === undefined || form.checkModifiedAfter > Date.now() ) {
+			console.log("Find updated form");
 			form = this.checkUpdatedFormVersion(name);
 		}
 
@@ -39,9 +43,20 @@ export class MetaformService {
 			throw new Error(`The form '${name}' was not found on the server!`);
 		}
 
-		localStorage.setItem(`mf:${name}`, form);
+		localStorage.setItem(`mf:${name}`, JSON.stringify(form));
 
 		return form;
+	}
+
+	// Insert data into each question control
+	loadFormData( form: Metaform, dataSource: IBusinessRuleData ) {
+		// Probably not the best implementation
+		for(let q of form.questions) {
+			for(let mq of q.items) {
+				var data = dataSource.getValue( mq.key );
+				mq.value = data;
+			}
+		}
 	}
 
 	toFormGroup( form: Metaform ) : FormGroup {
@@ -50,18 +65,24 @@ export class MetaformService {
         }
 
 		let group: any = {};
-		let questions:MfQuestion<any>[] = form.questions;
+		let questions:MfQuestion[] = form.questions;
 		
-		questions.forEach(question => {
-			group[question.key] = question.required 
-				? 
-					new FormControl(question.value || '', Validators.required)
-				: 
-					new FormControl(question.value || '');
-		});
+		// Depending on whether we're desktop or not indicates
+		// whether we are displaying only one question, or all
+		// questions in a 'section'
+		
+		// questions.forEach(question => {
+		// 	group[question.key] = question.required 
+		// 		? 
+		// 			new FormControl(question.value || '', Validators.required)
+		// 		: 
+		// 			new FormControl(question.value || '');
+		// });
 
 		return new FormGroup(group);
 	}
+
+
 
 	// TODO(ian): Determine whether we need to separate out these calls
 	// If it's just as quick to read the entire form JSON and pipe it back,
@@ -74,6 +95,16 @@ export class MetaformService {
 		m.version = 1;
 		m.lastModified = new Date( Date.now() );
 		m.checkModifiedAfter = new Date( Date.now() + 10000 );
+
+		let items: Question<any>[] = [];
+
+		let fn = new MfTextQuestion( { key: "firstName", label: "First name", required: true} );
+		let ln = new MfTextQuestion( { key: "lastName", label: "Last name", required: true} );
+		items.push(fn);
+		items.push(ln);
+
+		let q1 = new MfQuestion("FullName", items, "Please enter your full name")
+		m.questions.push(q1);
 
 		return m;
 	}

@@ -1,11 +1,25 @@
-<h1>Metaform</h1>
-<p>Name: {{ formName }}</p>
-    <form (ngSubmit)="onSubmit()"> [formGroup]="form">
-    </form>
-<!--<div>
+<h4>Metaform</h4>
+<pre>
+Name: {{ formName }}
+CheckModifiedAfter: {{ checkModifiedAfter }}
+Mobile? {{ isReducedSize }}
+</pre>
+<div *ngFor="let question of form.questions">
+    <!-- captions are optional for certain questions -->
+    <div *ngIf="question.caption">{{ question.caption }}</div>
+    <div *ngFor="let mq of question.items">
+        <!-- There should be some form of inline ability -->
+        <!-- otherwise we layout items on separate lines -->
+        {{ mq.key }}
+    </div>
+</div>
+
+    <!--<form (ngSubmit)="onSubmit()"> [formGroup]="form">
         <div *ngFor="let question of questions" class="form-row">
             <mf-question [questions]="question" [form]="form"></mf-question>
         </div>
+    </form>-->
+<!--<div>
         TODO(ian): update tracker buttons 
         <div class="form-row">
             <button type="submit" [disabled]="!form.valid">Save</button>

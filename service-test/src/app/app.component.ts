@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { WindowSize } from './shared/framework/window-size';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +8,18 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'Step Suite Test';
+  wsx: number;
+  wsy: number;
+
+  constructor(private window: WindowSize) {
+      console.log("AppComponent");
+  }
+
+  ngOnInit() {
+      console.log("AppComponent::OnInit");
+      this.window.height$.subscribe(
+        h => this.wsy = h);
+      this.window.width$.subscribe(
+        w => this.wsx = w);
+  }
 }

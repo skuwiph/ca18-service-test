@@ -9,6 +9,7 @@ import { routing } from './app.routing';
 import { AppComponent } from './app.component';
 import { StepComponent } from './step.component';
 
+import { WindowSize } from './shared/framework/window-size';
 import { BusinessRuleService } from './shared/rule/business-rule.service';
 import { ApplicationService } from './shared/application/application.service';
 import { TrackerService } from './shared/tracker/tracker.service';
@@ -27,6 +28,7 @@ import { MetaformService } from './shared/metaform/metaform.service';
     ],
     providers: [ 
         HttpModule,
+        WindowSize,
         BusinessRuleService,
         ApplicationService,
         TrackerService,

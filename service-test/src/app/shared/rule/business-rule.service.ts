@@ -7,13 +7,18 @@ export class BusinessRuleService {
 
     constructor() { }
 
-    public addRule( rule: BusinessRule ) {
-        // validate
+    public getCurrentRules() : BusinessRule[] {
+        let rules: BusinessRule[] = this.getRulesFromStorage();
 
+        // Read from Http if null;
+        if( rules == null ) {
+            console.debug(`Reading Http for rules will be necessary`);
+        }
+
+        return rules;
     }
-    evaluateRule( name: string, data: any ) : boolean {
-        // console.log(`Evaluate rule ${name}`);
 
+    public evaluateRule( name: string, data: any ) : boolean {
         let r: BusinessRule = this.getRuleByName( name );
 
         return r.isTrue( data );
@@ -24,7 +29,6 @@ export class BusinessRuleService {
         var names: string = "";
 
         for( let r of rules ) {
-            // console.log(`addRule: checking '${r.name}' against '${names}'`);
             if( names.indexOf(r.name) >= 0 ) {
                 throw new Error(`BusinessRule: The rule '${r.name}' already exists in this ruleset!`);
             } else {
@@ -36,7 +40,6 @@ export class BusinessRuleService {
     }
 
     private getRuleByName( name: string ) : BusinessRule {
-        // console.log(`Getting rule ${name}`);
         for( let r of this.rules ) {
             if( r.name == name ) {
                 return r;
@@ -45,6 +48,19 @@ export class BusinessRuleService {
 
         throw new Error(`No rule with the name '${name}' found!`);
     }
+
+    private getRulesFromStorage() : BusinessRule[] {
+        let rules: BusinessRule[] = [];
+
+        // TODO(ian): localStorage 
+        if( localStorage.getItem("rules") === undefined ) {
+            console.log("No rules stored");
+        }
+
+        rules = JSON.parse(localStorage.getItem("rules"));
+
+        return rules;
+    }    
 
     private rules: BusinessRule[];
 }
