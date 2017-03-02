@@ -19,16 +19,6 @@ export class TrackerService {
         private formService: MetaformService
     ) {}
 
-
-    // TODO(ian): @ugh
-    loadNextSequenceForForm( applicationId: number, formName: string, dataSource: IBusinessRuleData) : string {
-        let rules = this.ruleService.getCurrentRules();
-        let app = this.loadSequenceForApplication( applicationId, true );
-        let seq = this.loadFormSequenceByName(app, formName);
-
-        return "";
-    }
-
     // TODO(ian): @ugh
     // Read the latest sequence item for this application.
     // NOTE: Assumes rules are available from the service.
@@ -52,7 +42,9 @@ export class TrackerService {
         // console.log(`Read sequence for application ${applicationId}`);
 
         let seq = this.getSequenceFromStorage();
-        console.debug(`latestSequenceItem is forcing a read from Http`);
+        
+        if( forceRead )
+            console.debug(`latestSequenceItem is forcing a read from Http`);
 
         if( seq === null || forceRead ) {
             seq = this.sequence;
@@ -106,21 +98,26 @@ export class TrackerService {
         return matchingSequence;
     }
 
-    // TODO(ian): @ugh
-    // Find the first incomplete step for the metaform sequence matching
-    // the passed name
-    loadFormSequenceByName( applicationId: number, formName: string ) : SequenceStep {
+    //
+    // Find the tracker sequence matching the passed metaform name
+    //
+    getTrackerSequenceForFormName( applicationId: number, formName: string ) : TrackerSequence {
+        console.debug(`Looking for form ${formName} for application ${applicationId}`);
+
+
         let matchingSequence: TrackerSequence;
-        let applicationSequence = this.loadSequenceForApplication(applicationId);
+        let applicationSequence = this.loadSequenceForApplication(applicationId, true);
     
         if( applicationSequence === null || applicationSequence.sequence === null ) {
             return null;
         }
 
-        this.ruleService.setRules(this.ruleService.getCurrentRules());
+        // let rules = this.ruleService.getCurrentRules();
+        // this.ruleService.setRules(rules);
 
         for(let s of applicationSequence.sequence ) {
             // Find the matching sequence
+            // TODO(ian): Do we need to check the rules in this scenario?
             if( s.type == TrackerSequenceType.Metaform && s.metaformName == formName )  {
                 matchingSequence = s;
                 break;
@@ -132,16 +129,16 @@ export class TrackerService {
 
     // TODO(ian): @ugh
     // Find first incomplete step
-    findFirstMatchingStep( sequence: TrackerSequence, rules: BusinessRule[], data: IBusinessRuleData ) : SequenceStep {
+    findFirstMatchingStep( sequence: TrackerSequence, rules: BusinessRule[], dataSource: IBusinessRuleData ) : SequenceStep {
         let matchingStep: SequenceStep;
         if( sequence.steps ) {
-            this.ruleService.setRules(rules);
-            for(let step of sequence.steps) {
+            // TODO: will we need an early out
+            sequence.steps.forEach((step, index) => {
                 if( !step.complete) {
                     matchingStep = step;
-                    break;
+                    sequence.currentStep = index;
                 }
-            }
+            });
         }
 
         return matchingStep;
@@ -191,9 +188,9 @@ export class TrackerService {
                 { id: 100, complete: false, routerUrl: ['sequence/page', 1]}
             ]
         },
-        {id: 3, complete: false, title: 'A second incomplete sequence item', type: TrackerSequenceType.Metaform, 
+        {id: 3, complete: false, title: 'A fancy metaform', type: TrackerSequenceType.Metaform, metaformName: 'this-is-my-form', 
             steps: [
-                { id: 300, complete: false, routerUrl: ['form/this-is-MY-form']}
+                { id: 300, complete: false, routerUrl: ['form/this-is-my-form']}
             ]
         }
     ], prioritySequenceId: []};

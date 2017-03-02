@@ -26,7 +26,7 @@ export class TrackerSequence {
     // If step is custom?
 
     // What's the next step to take
-    currentStep: number;
+    currentStep?: number;
 
     constructor( id: number, title: string, ruleToMatch: string, type: TrackerSequenceType ) {
         this.id = id;

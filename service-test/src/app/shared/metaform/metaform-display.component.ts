@@ -9,7 +9,7 @@ import { ApplicationService } from '../application/application.service';
 import { TrackerService } from '../tracker/tracker.service';
 
 import { MetaformService } from './metaform.service';
-import { Metaform, MfQuestion } from './metaform';
+import { Metaform, MetaformSection, MfQuestion } from './metaform';
 
 import { WindowSize } from '../framework/window-size';
 
@@ -22,11 +22,18 @@ import { WindowSize } from '../framework/window-size';
 })
 
 export class MetaformDisplayComponent implements OnInit {
+    title: string;
+    subtitle: string;
+
     formName: string;
+    
     form: Metaform;
     formGroup: FormGroup;
     checkModifiedAfter: Date;
+    
     isReducedSize: boolean;
+
+    currentSection: MetaformSection;
 
     constructor(
         private route: ActivatedRoute,
@@ -44,14 +51,21 @@ export class MetaformDisplayComponent implements OnInit {
 
         // Read form
         this.form = this.formService.loadForm(this.formName);
+        console.log("Got form");
         this.checkModifiedAfter = this.form.checkModifiedAfter;
 
-        // TODO(ian): @ugh nasty code; reimplement
-        // let sequence =  this.trackerService.loadFormSequenceByName( 1, this.formName );
-        // let targetQuestion = this.trackerService.loadNextSequenceForForm()
-        // // Determine which section/question we should be displaying
-        // let targetQuestion = this.trackerService
-        //     .loadNextSequenceForForm( 1, this.formName, this.applicationService );
+        let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
+
+        console.debug(`On sequence ${step.id} with title '${step.title}. Total number of questions is ${this.form.totalQuestionCount}`);
+
+        this.title = step.title;
+
+        // IMPORTANT: the metaform code has to determine how many possible steps
+        // there are, and use that value to calculate % complete; the tracker
+        // won't know itself and is not responsible for determining how many pages
+        // there are in a form
+        this.currentSection = this.form.sections[0];
+        this.subtitle = this.currentSection.title;
 
         //this.formGroup = this.formService.groupForName(targetQuestion);
 

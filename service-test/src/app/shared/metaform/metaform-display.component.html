@@ -1,10 +1,11 @@
-<h4>Metaform</h4>
+<h4>{{ title }}</h4>
 <pre>
 Name: {{ formName }}
 CheckModifiedAfter: {{ checkModifiedAfter }}
 Mobile? {{ isReducedSize }}
 </pre>
-<div *ngFor="let question of form.questions">
+<h5>{{ subtitle }}</h5>
+<div *ngFor="let question of currentSection.questions">
     <!-- captions are optional for certain questions -->
     <div *ngIf="question.caption">{{ question.caption }}</div>
     <div *ngFor="let mq of question.items">

@@ -5,7 +5,24 @@ export class Metaform {
     version: number;
     lastModified: Date;
     checkModifiedAfter = new Date( Date.now() );
+    
+    sections: MetaformSection[] = [];
 
+    // For the tracker: how many questions in total
+    // do we have, regardless of whether they are
+    // valid according to the rules
+    totalQuestionCount: number;
+
+    // // Retire!
+    // questions: MfQuestion[] = [];
+}
+
+// A section represents a number of grouped questions.
+// In the desktop version, all of the contained questions will 
+// probably be displayed. In the mobile version, however, we 
+// will only display one at a time.
+export class MetaformSection {
+    title: string;              // Used in displays
     questions: MfQuestion[] = [];
 }
 
@@ -31,7 +48,6 @@ export class Question<T> {
   required: boolean;
   order: number;
   controlType: string;
-  section: string;
   
   constructor(options: {
       value?: T,
@@ -39,8 +55,7 @@ export class Question<T> {
       label?: string,
       required?: boolean,
       order?: number,
-      controlType?: string,
-      section?: string
+      controlType?: string
     } = {}
 ) {
     this.value = options.value;
@@ -49,7 +64,6 @@ export class Question<T> {
     this.required = !!options.required;
     this.order = options.order === undefined ? 1 : options.order;
     this.controlType = options.controlType || '';
-    this.section = options.section || '';
   }
 }
 
