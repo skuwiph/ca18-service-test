@@ -15,7 +15,7 @@
         </div>
         <div class="question-block">
             <div class="content-wrapper">            
-                <div *ngFor="let question of currentSection.questions">
+                <div *ngFor="let question of questionsToDisplay">
                     <!-- captions are optional for certain questions -->
                     <div *ngIf="question.caption">{{ question.caption }}</div>
                     <div *ngFor="let mq of question.items">

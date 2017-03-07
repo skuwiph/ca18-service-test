@@ -70,13 +70,69 @@ export class MetaformService {
         }
 	}
 
-	toFormGroup( form: Metaform, section: MetaformSection ) : FormGroup {
-        if( form === undefined ) {
-            throw new Error(`The form was not loaded prior to calling this method!`);
+
+    whatToRender( 
+        form: Metaform, 
+        section: MetaformSection, 
+        dataSource: IBusinessRuleData, 
+        firstQuestionToDisplay: number, 
+        isMobile: boolean,
+        direction: number = +1
+    ) 
+    : [MetaformSection, number, MfQuestion[], FormGroup, boolean] {
+        let currentSection = section;
+        let q: MfQuestion[] = [];
+        let fg: FormGroup;
+        let sectionIndex: number;
+        let atEndOfForm = false;
+
+        if( direction < 0 ) firstQuestionToDisplay -= 2;
+
+        let lastQuestionToDisplay = firstQuestionToDisplay + 1;
+
+        console.log(`first, last: ${firstQuestionToDisplay}, ${lastQuestionToDisplay}`);
+
+        // Are we stepping beyond our limit?
+        if( currentSection == null 
+        || ( (firstQuestionToDisplay >= currentSection.questions.length && direction > 0)
+        || ( firstQuestionToDisplay < 0 && direction < 0 ) )  ) {
+            // Get the next available section
+            currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);
+
+            if( direction > 0 ) {
+                firstQuestionToDisplay = 0;
+            } else {
+                if( isMobile ) {
+                    firstQuestionToDisplay = currentSection.questions.length - 1;
+                } else {
+                    firstQuestionToDisplay = 0;
+                }
+            }
+            lastQuestionToDisplay = firstQuestionToDisplay + 1;
         }
 
+        // Get the section index so we know when we're on the last one
+        sectionIndex = this.findSectionIndex(form, currentSection);
+
+        // If we are NOT mobile, we return all questions in the desired section.
+        // If we ARE mobile, we return the 'current' question from the 'current' section.
+        if( !isMobile ) {
+            lastQuestionToDisplay = currentSection.questions.length - 1;
+        }
+
+        console.info(`Got section: ${currentSection.title}, sectionCount = ${form.sections.length}, index = ${sectionIndex}, first = ${firstQuestionToDisplay}, last = ${lastQuestionToDisplay}, count = ${currentSection.questions.length}`);
+
+        q = currentSection.questions.slice(firstQuestionToDisplay, lastQuestionToDisplay);
+        fg = this.toFormGroup(q);
+
+        atEndOfForm = sectionIndex == form.sections.length - 1 && lastQuestionToDisplay == currentSection.questions.length - 1;
+
+        return [currentSection, lastQuestionToDisplay, q, fg, atEndOfForm];
+    }
+
+    private toFormGroup( questionsToDisplay: MfQuestion[] ) : FormGroup {
 		let group: any = {};
-		let questions:MfQuestion[] = section.questions;
+		let questions:MfQuestion[] = questionsToDisplay;
 		
 		// Depending on whether we're desktop or not indicates
 		// whether we are displaying only one question, or all
@@ -93,17 +149,68 @@ export class MetaformService {
 		return new FormGroup(group);
 	}
 
-    whatToRender( form: Metaform, section: MetaformSection, isMobile: boolean ) : [MfQuestion[], FormGroup] {
-        let q: MfQuestion[] = [];
-        let fg: FormGroup;
+    private findNextAvailableSection(form: Metaform, startSection: MetaformSection, dataSource: IBusinessRuleData, direction: number = +1 ) : MetaformSection {
+        console.info(`Direction: ${direction}`);
 
-        // If we are NOT mobile, we return all questions in the desired section.
-        
+        let matchingSection: MetaformSection;
+        let startIndex = 0;
 
-        // If we ARE mobile, we return the 'current' question from the 'current' section.
+        if( startSection ) {
+            form.sections.forEach( (section, index) => {
+                if( section == startSection ) {
+                    startIndex = index + direction;
+                    
+                    if( startIndex < 0 ) startIndex = 0;
+                }
+            } );
+        }
 
+        console.info(`direction: ${direction}, startIndex: ${startIndex}`);
 
-        return [q, fg];
+        // Skip through to find the matching section
+        for(let i = startIndex; i < form.sections.length; i += direction ) {
+            console.debug(`> Index is ${i}`);
+            if( this.isSectionValid( form.sections[i], dataSource )) {
+                console.info(`> Got section with index ${i}`);
+                matchingSection = form.sections[i];
+                break;
+            }
+        }
+
+        if( !matchingSection )
+            throw new Error("No matchingSection!");
+
+        return matchingSection;
+    }
+
+    private findSectionIndex(form: Metaform, currentSection: MetaformSection ) : number {
+        let sectionIndex = 0;
+
+        form.sections.forEach( (section, index) => {
+            if( section == currentSection ) {
+                sectionIndex = index;
+            }
+        } );
+
+        return sectionIndex;
+    }
+
+    private isSectionValid( section: MetaformSection, dataSource: IBusinessRuleData ) : boolean {
+        let hasRules = (section.ruleToMatch !== undefined);
+
+        if( hasRules ) {
+            console.debug(`s.ruleToMatch = ${section.ruleToMatch}`);
+        }
+
+        // If this section has a rule and it evaluates true, OR we do not have a rule,
+        // that's our next section
+            if( (hasRules && this.ruleService.evaluateRule(section.ruleToMatch, dataSource) ) 
+            || !hasRules ) {
+                console.log(`--> Matching section is ${section.title}`);
+                return true;
+        }
+
+        return false;
     }
 
 	// TODO(ian): Determine whether we need to separate out these calls
@@ -182,7 +289,48 @@ export class MetaformService {
                         ]
                     }                    
                 ]
-            }
+            },
+            {
+                title: 'About your Lungfish',
+                questions: [
+                    {
+                        caption: 'Here\'s the first question from the second section',
+                        name: 'fishTelephone',
+                        items: [
+                            { 
+                                controlType: 'dropdown', 
+                                label: 'Country Code', 
+                                key: 'iddCode', 
+                                order: 1,
+                                value: "",
+                                required: true 
+                            },
+                            { 
+                                controlType: 'textbox', 
+                                label: 'Number', 
+                                key: 'telephoneNumber', 
+                                order: 2,
+                                value: "",
+                                required: true 
+                            }
+                        ]
+                    },                    
+                    {
+                        caption: 'A last question from section #2',
+                        name: 'fishColour',
+                        items: [
+                            { 
+                                controlType: 'options', 
+                                label: 'Colour', 
+                                key: 'fishColour', 
+                                order: 1,
+                                value: "",
+                                required: true 
+                            }
+                        ]
+                    }                    
+                ]
+            }            
         ]
     };
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+    import { Injectable } from '@angular/core';
 import { Router,ActivatedRoute  } from '@angular/router';
 
 import { Http } from '@angular/http';
@@ -11,30 +11,58 @@ import { MetaformService } from '../metaform/metaform.service';
 import { ApplicationSequence, TrackerSequence, TrackerSequenceType, SequenceStep } from './tracker-sequence';
 
 export interface ITrackedProcess {
-
+    handleNavigateNext(): boolean;
+    handleNavigatePrevious(): boolean;
 }
 
 @Injectable()
-export class TrackerService {
+export class TrackerService implements ITrackedProcess {
 
     constructor(
         private http: Http,
         private ruleService: BusinessRuleService,
         private formService: MetaformService
     ) {
-        // this.currentSequenceId = 0;
+        this.trackedProcess = this;
     }
 
-    get processHost() : ITrackedProcess {
-        return this.trackedProcess;
-    }
-
-    set processHost( host: ITrackedProcess ) {
+    addProcessHost( host: ITrackedProcess ) {
         this.trackedProcess = host;
+    }
+
+    removeProcessHost(host: ITrackedProcess ) {
+        if( host != this.trackedProcess )
+            throw new Error("The process host being removed is not the one we were expecting! Check that all hosts have a call to this function in ngOnDestroy();");
+
+        this.trackedProcess = this;
+    }
+
+    handleNavigateNext(): boolean {
+        console.debug("I'm handling navigation!");
+
+        return false;
+    }
+
+    handleNavigatePrevious(): boolean {
+        console.debug("I'm handling navigation!");
+
+        return false;
     }
 
     next(): void {
         console.log(`TrackerService:next() currentSequence: ${this.currentSequenceId}`);
+
+        // We do this, regardless of who decides upon the next step
+        this.updateServiceOfCurrentStep();
+
+        if( this.trackedProcess.handleNavigateNext() ) {
+            console.debug("TrackedProcess is handling next, not us");
+        } else {
+            console.debug("We're handling next");
+
+            this.findNextStep();
+        }
+
         // if ( this.currentHost !== undefined && !this.enableNextButton() ) return;
 
         // if ( this.currentHost !== undefined ) {
@@ -42,17 +70,22 @@ export class TrackerService {
         // }
         // this.progressPercent++;
 
-        this.findNextStep();
+    }
+
+    updateServiceOfCurrentStep() {
+        console.info(`We're telling the service that there is a change in the last completed step by the applicant`);
     }
 
     previous(): void {
         console.log('TrackerService:previous()');
-        // if ( this.currentHost !== undefined && !this.enablePreviousButton() ) return;
 
-        // if ( this.currentHost !== undefined ) {
-        //     this.currentHost.processPreviousLocally();
-        // }
-        // this.progressPercent--;
+        if( this.trackedProcess.handleNavigatePrevious() ) {
+            console.debug("TrackedProcess is handling previous, not us");
+        } else {
+            console.debug("We're handling previous");
+
+            this.findNextStep();
+        }
     }
 
     navigateToPreviousStep( url : any,  router: Router, route: ActivatedRoute ) : void {

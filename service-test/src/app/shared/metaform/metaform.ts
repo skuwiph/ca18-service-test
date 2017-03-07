@@ -1,4 +1,4 @@
-import { BusinessRule } from '../rule/business-rule';
+//import { IBusinessRule } from '../rule/business-rule';
 
 export class Metaform {
     name: string;
@@ -24,6 +24,7 @@ export class Metaform {
 export class MetaformSection {
     title: string;              // Used in displays
     questions: MfQuestion[] = [];
+    ruleToMatch?: string;
 }
 
 // An MfQuestion can contain more than one control;
@@ -32,6 +33,7 @@ export class MetaformSection {
 export class MfQuestion {
     name: string;
     caption?: string;
+    ruleToMatch?: string;
     items: Question<any>[] = [];
 
     constructor(name: string, items:Question<any>[], caption?: string) {

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { FormGroup } from '@angular/forms';
 
@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/switchMap';
 
 import { ApplicationService } from '../application/application.service';
-import { TrackerService } from '../tracker/tracker.service';
+import { TrackerService, ITrackedProcess } from '../tracker/tracker.service';
 
 import { MetaformService } from './metaform.service';
 import { Metaform, MetaformSection, MfQuestion } from './metaform';
@@ -21,7 +21,7 @@ import { WindowSize } from '../framework/window-size';
     styleUrls: ['./metaform-display.component.css']
 })
 
-export class MetaformDisplayComponent implements OnInit {
+export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProcess {
     title: string;
     subtitle: string;
 
@@ -35,7 +35,9 @@ export class MetaformDisplayComponent implements OnInit {
 
     currentSection: MetaformSection;
     questionsToDisplay: MfQuestion[];
-    
+    firstQuestionToDisplay: number;
+    atEnd: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -43,9 +45,23 @@ export class MetaformDisplayComponent implements OnInit {
         private applicationService: ApplicationService,
         private trackerService: TrackerService,
         private formService: MetaformService
-    ) { }
+    ) {
+        // Initialise the first question
+        this.firstQuestionToDisplay = 0;
+     }
 
     ngOnInit() {
+        this.trackerService.addProcessHost(this);
+
+        // NOTE(ian): Not sure we need to subscribe to this!
+        // TODO(ian): Decide whether we want this done differently, for example
+        // within the formService itself...
+        this.windowSize.width$.subscribe( x => { 
+            console.debug("Size update");
+            this.isReducedSize = (window.innerWidth <= 800);
+            }
+        );
+
         console.debug(`MetaformDisplayComponent: Route Params: ${this.route.snapshot.params['formName']}`);
 
         this.formName = this.route.snapshot.params['formName'];
@@ -54,6 +70,7 @@ export class MetaformDisplayComponent implements OnInit {
         this.form = this.formService.loadForm(this.formName);
         console.log("Got form");
         this.checkModifiedAfter = this.form.checkModifiedAfter;
+        //this.currentSection = this.form.sections[0];
 
         let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
 
@@ -61,32 +78,48 @@ export class MetaformDisplayComponent implements OnInit {
 
         this.title = step.title;
 
+        this.displayQuestions();        
+
         // IMPORTANT: the metaform code has to determine how many possible steps
         // there are, and use that value to calculate % complete; the tracker
         // won't know itself and is not responsible for determining how many pages
         // there are in a form
-        this.currentSection = this.form.sections[0];
+
+    }
+
+    ngOnDestroy() : void {
+        this.trackerService.removeProcessHost(this);
+    }
+
+    handleNavigateNext(): boolean {
+        // Get next question
+        if( !this.atEnd ) {
+            console.debug("MetaformDisplayComponent is handling next");
+            this.displayQuestions();
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+
+    handleNavigatePrevious(): boolean {
+        console.debug("MetaformDisplayComponent is handling previous");
+        this.displayQuestions(-1);
+        return true;
+    }
+
+    private displayQuestions(direction: number = +1 ) {
+        let result = this.formService.whatToRender(this.form, this.currentSection, this.applicationService, this.firstQuestionToDisplay, this.isReducedSize, direction);
+
+        this.currentSection = result[0];
+        this.firstQuestionToDisplay = result[1];
+        this.questionsToDisplay = result[2].slice(0);
+        this.formGroup = result[3];
+        this.atEnd = result[4];
+
         this.subtitle = this.currentSection.title;
-
-        //this.formGroup = this.formService.groupForName(targetQuestion);
-
         console.log(`current sequence id : ${this.trackerService.currentSequenceId}, ${this.trackerService.currentSequenceStepId}`);
-
-        // If we have a target question, target it
-        // TODO(ian): The formService needs to know how many questions to
-        // export at a time, based on the screen/viewport width.
-
-        // NOTE(ian): Not sure we need to subscribe to this!
-        this.windowSize.width$.subscribe( x => { 
-            console.debug("Size update");
-            this.isReducedSize = (window.innerWidth <= 800);
-            }
-        );
-
-        // Also, we need to determine what 'page' we are on, since that
-        // will determine where we start outputting from.
-        //this.formGroup = this.formService.toFormGroup(this.form);
-        //this.questions = this.formGroup
     }
 
     onSubmit() {
