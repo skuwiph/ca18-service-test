@@ -1,26 +1,39 @@
-<h4>{{ title }}</h4>
-<pre>
-Name: {{ formName }}
-CheckModifiedAfter: {{ checkModifiedAfter }}
-Mobile? {{ isReducedSize }}
-</pre>
-<h5>{{ subtitle }}</h5>
-<div *ngFor="let question of currentSection.questions">
-    <!-- captions are optional for certain questions -->
-    <div *ngIf="question.caption">{{ question.caption }}</div>
-    <div *ngFor="let mq of question.items">
-        <!-- There should be some form of inline ability -->
-        <!-- otherwise we layout items on separate lines -->
-        {{ mq.key }}
-    </div>
-</div>
+<div class="content-wrapper">
+    <h3>{{ title }}</h3>
+    <pre>
+    Name: {{ formName }}
+    CheckModifiedAfter: {{ checkModifiedAfter }}
+    Mobile? {{ isReducedSize }}
+    </pre>
+    <div class="question-block">
+        <div class="content-wrapper">
+            <div class="alert alert-intro" role="alert">
+                <div class="form-group">
+                    <h5><strong>{{ subtitle }}</strong></h5>
+                </div>
+            </div>
+        </div>
+        <div class="question-block">
+            <div class="content-wrapper">            
+                <div *ngFor="let question of currentSection.questions">
+                    <!-- captions are optional for certain questions -->
+                    <div *ngIf="question.caption">{{ question.caption }}</div>
+                    <div *ngFor="let mq of question.items">
+                        <!-- There should be some form of inline ability -->
+                        <!-- otherwise we layout items on separate lines -->
+                        {{ mq.key }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
     <!--<form (ngSubmit)="onSubmit()"> [formGroup]="form">
         <div *ngFor="let question of questions" class="form-row">
             <mf-question [questions]="question" [form]="form"></mf-question>
         </div>
     </form>-->
-<!--<div>
+    <!--<div>
         TODO(ian): update tracker buttons 
         <div class="form-row">
             <button type="submit" [disabled]="!form.valid">Save</button>
@@ -28,4 +41,7 @@ Mobile? {{ isReducedSize }}
     <div *ngIf="payLoad" class="form-row">
         <strong>Saved the following values</strong><br>{payLoad}
     </div>
-</div>-->
+    </div>-->
+    </div>    
+</div>
+<tracker-buttons></tracker-buttons>

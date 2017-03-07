@@ -93,6 +93,19 @@ export class MetaformService {
 		return new FormGroup(group);
 	}
 
+    whatToRender( form: Metaform, section: MetaformSection, isMobile: boolean ) : [MfQuestion[], FormGroup] {
+        let q: MfQuestion[] = [];
+        let fg: FormGroup;
+
+        // If we are NOT mobile, we return all questions in the desired section.
+        
+
+        // If we ARE mobile, we return the 'current' question from the 'current' section.
+
+
+        return [q, fg];
+    }
+
 	// TODO(ian): Determine whether we need to separate out these calls
 	// If it's just as quick to read the entire form JSON and pipe it back,
 	// then we can do that. If it's noticeably faster just to get the Header ETAG
@@ -114,6 +127,8 @@ export class MetaformService {
 
 		// let q1 = new MfQuestion("FullName", items, "Please enter your full name")
 		// // m.questions.push(q1);
+
+        console.debug(`returning test_form`);
 
         m = this.test_form;
 
@@ -147,6 +162,20 @@ export class MetaformService {
                                 label: 'Last name', 
                                 key: 'lastName', 
                                 order: 2,
+                                value: "",
+                                required: true 
+                            }
+                        ]
+                    },                    
+                    {
+                        caption: 'Another caption for the email question',
+                        name: 'email',
+                        items: [
+                            { 
+                                controlType: 'textbox', 
+                                label: 'Email', 
+                                key: 'email', 
+                                order: 1,
                                 value: "",
                                 required: true 
                             }

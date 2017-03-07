@@ -59,3 +59,10 @@ export enum TrackerSequenceType {
     Custom = 0,
     Metaform = 1
 };
+
+// Interface for a custom tracker step
+export interface ITrackerStepComponent {
+    // Called when the tracker buttons advance
+    setNextStep(): void;
+    
+}

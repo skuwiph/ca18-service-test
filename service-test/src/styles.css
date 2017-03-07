@@ -1,20 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
-body { 
-    font-family: 'calibri light';
-    font-size: 1.2em;
-    margin-top: 0;
-}
-
-h1 {
-    margin: 0 0;
-}
-
-h4 {
-    margin: 0 0;
-}
-
 pre {
-    font-size: 0.9rem;
+    font-size: 1rem;
     background-color: darkslateblue;
     color: white;
     padding: 2px 2px;

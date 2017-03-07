@@ -1,0 +1,86 @@
+/* originally authored by Nick Pettit - https://github.com/nickpettit/glide */
+/* Sticky footer styles
+-------------------------------------------------- */
+
+.trackbuttons {
+    margin: 0 auto;
+    align-content: center;
+}
+/*
+.tracker-buttons {
+
+}*/
+
+.btn-track-previous {
+   background-color: #007DA4;
+   color: #FFF;
+   text-transform: uppercase;
+   font-weight: bold;
+   white-space: normal;
+   width:14%;
+   height: 2.3em;
+   vertical-align: middle;
+ }
+
+ .btn-track-previous :hover{
+   background-color: #01AAE1;
+   color: #FFF;
+ }
+
+ .btn-track-next{
+   background-color: #33AB5A;
+   color: #FFF;
+   text-transform: uppercase;
+   font-weight: bold;
+   width: 84%;
+   float: right;
+   margin: 0;
+   white-space: normal;
+   height: 2.3em;
+   vertical-align: middle;
+ }
+
+ .btn-track-next:hover{
+   background-color: #5BD982;
+   color: #FFF;
+ }
+
+
+@-webkit-keyframes pulse {
+  from {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+
+  50% {
+    -webkit-transform: scale3d(1.05, 1.05, 1.05);
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+
+  to {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes pulse {
+  from {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+
+  50% {
+    -webkit-transform: scale3d(1.05, 1.05, 1.05);
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+
+  to {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+.pulse {
+  -webkit-animation-name: pulse;
+  animation-name: pulse;
+}

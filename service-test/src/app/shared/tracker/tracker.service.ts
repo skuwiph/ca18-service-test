@@ -10,6 +10,10 @@ import { MetaformService } from '../metaform/metaform.service';
 
 import { ApplicationSequence, TrackerSequence, TrackerSequenceType, SequenceStep } from './tracker-sequence';
 
+export interface ITrackedProcess {
+
+}
+
 @Injectable()
 export class TrackerService {
 
@@ -17,7 +21,64 @@ export class TrackerService {
         private http: Http,
         private ruleService: BusinessRuleService,
         private formService: MetaformService
-    ) {}
+    ) {
+        // this.currentSequenceId = 0;
+    }
+
+    get processHost() : ITrackedProcess {
+        return this.trackedProcess;
+    }
+
+    set processHost( host: ITrackedProcess ) {
+        this.trackedProcess = host;
+    }
+
+    next(): void {
+        console.log(`TrackerService:next() currentSequence: ${this.currentSequenceId}`);
+        // if ( this.currentHost !== undefined && !this.enableNextButton() ) return;
+
+        // if ( this.currentHost !== undefined ) {
+        //     this.currentHost.processNextLocally();
+        // }
+        // this.progressPercent++;
+
+        this.findNextStep();
+    }
+
+    previous(): void {
+        console.log('TrackerService:previous()');
+        // if ( this.currentHost !== undefined && !this.enablePreviousButton() ) return;
+
+        // if ( this.currentHost !== undefined ) {
+        //     this.currentHost.processPreviousLocally();
+        // }
+        // this.progressPercent--;
+    }
+
+    navigateToPreviousStep( url : any,  router: Router, route: ActivatedRoute ) : void {
+        // TODO(ian): actually have appropriate behaviour here
+        
+        console.log(route.toString());
+        console.log(`TrackerService: Navigating to '${url}'`);
+        router.navigateByUrl( url );
+    }
+
+    navigateToNextStep( url : any,  router: Router, route: ActivatedRoute ) : void {
+        // TODO(ian): actually have appropriate behaviour here
+        console.log(route.toString());
+        console.log(`TrackerService: Navigating to '${url}'`);
+        router.navigateByUrl( url );
+    }
+
+    enableNextButton(): boolean 
+    { 
+        return true; 
+    }
+
+    enablePreviousButton(): boolean 
+    { 
+        return true; 
+    }
 
     // TODO(ian): @ugh
     // Read the latest sequence item for this application.
@@ -52,6 +113,9 @@ export class TrackerService {
             // Write to localStorage
             localStorage.setItem("Seq", JSON.stringify(seq));
         }
+
+        // this.currentSequenceId += 1;
+        // console.log(`Current sequence Id = ${this.currentSequenceId}`)
 
         return seq;
     }
@@ -98,6 +162,22 @@ export class TrackerService {
         return matchingSequence;
     }
 
+    findNextStep() {
+        let matchingSequence: TrackerSequence;
+        this.ruleService.setRules(this.ruleService.getCurrentRules());
+        
+        // Start on current sequence
+        for(let s of this.currentSequence.sequence) {
+            if( s.id == this.currentSequenceId ) {
+                console.log(`found current sequence, checking next available step from ${this.currentSequenceStepId}`);
+                // If it's a metaform, we should...?
+                if( s.type == TrackerSequenceType.Metaform ) {
+                    
+                }
+            }
+        }
+    }
+
     //
     // Find the tracker sequence matching the passed metaform name
     //
@@ -124,6 +204,9 @@ export class TrackerService {
             }
         }
 
+        this.currentSequence = applicationSequence;
+        this.currentSequenceId = matchingSequence.id;
+        this.currentSequenceStepId = matchingSequence.steps[0].id;
         return matchingSequence;
     }
 
@@ -194,4 +277,11 @@ export class TrackerService {
             ]
         }
     ], prioritySequenceId: []};
+
+    public currentSequence: ApplicationSequence;
+    public currentSequenceId: number;
+    public currentSequenceStepId: number;
+    public progressPercent: number = 0;
+
+    private trackedProcess: ITrackedProcess;
 }

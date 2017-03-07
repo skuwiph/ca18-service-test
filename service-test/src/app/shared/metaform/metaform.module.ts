@@ -4,13 +4,15 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 import { MetaformDisplayComponent } from './metaform-display.component';
 
+import { TrackerModule } from '../tracker/tracker.module';
 import { routing } from './metaform.routing';
 
 @NgModule({
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    routing
+    routing,
+    TrackerModule
   ],
   declarations: [MetaformDisplayComponent]
 })

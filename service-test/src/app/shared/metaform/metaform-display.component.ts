@@ -34,7 +34,8 @@ export class MetaformDisplayComponent implements OnInit {
     isReducedSize: boolean;
 
     currentSection: MetaformSection;
-
+    questionsToDisplay: MfQuestion[];
+    
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -68,6 +69,8 @@ export class MetaformDisplayComponent implements OnInit {
         this.subtitle = this.currentSection.title;
 
         //this.formGroup = this.formService.groupForName(targetQuestion);
+
+        console.log(`current sequence id : ${this.trackerService.currentSequenceId}, ${this.trackerService.currentSequenceStepId}`);
 
         // If we have a target question, target it
         // TODO(ian): The formService needs to know how many questions to

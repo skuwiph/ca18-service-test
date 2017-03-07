@@ -3,6 +3,8 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
+import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
+
 import { RouterModule, Routes } from '@angular/router'
 
 import { routing } from './app.routing';
@@ -20,6 +22,7 @@ import { MetaformService } from './shared/metaform/metaform.service';
         BrowserModule,
         FormsModule,
         HttpModule,
+        NgbModule.forRoot(),
         routing
     ],
     declarations: [
