@@ -90,12 +90,12 @@ export class MetaformService {
 
         let lastQuestionToDisplay = firstQuestionToDisplay + 1;
 
-        console.log(`first, last: ${firstQuestionToDisplay}, ${lastQuestionToDisplay}`);
+        // console.log(`first, last: ${firstQuestionToDisplay}, ${lastQuestionToDisplay}`);
 
         // Are we stepping beyond our limit?
         if( currentSection == null 
         || ( (firstQuestionToDisplay >= currentSection.questions.length && direction > 0)
-        || ( firstQuestionToDisplay < 0 && direction < 0 ) )  ) {
+        || ( firstQuestionToDisplay <= 0 && direction < 0 ) )  ) {
             // Get the next available section
             currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);
 
@@ -117,10 +117,10 @@ export class MetaformService {
         // If we are NOT mobile, we return all questions in the desired section.
         // If we ARE mobile, we return the 'current' question from the 'current' section.
         if( !isMobile ) {
-            lastQuestionToDisplay = currentSection.questions.length - 1;
+            lastQuestionToDisplay = currentSection.questions.length;
         }
 
-        console.info(`Got section: ${currentSection.title}, sectionCount = ${form.sections.length}, index = ${sectionIndex}, first = ${firstQuestionToDisplay}, last = ${lastQuestionToDisplay}, count = ${currentSection.questions.length}`);
+        //console.info(`Got section: ${currentSection.title}, sectionCount = ${form.sections.length}, index = ${sectionIndex}, first = ${firstQuestionToDisplay}, last = ${lastQuestionToDisplay}, count = ${currentSection.questions.length}`);
 
         q = currentSection.questions.slice(firstQuestionToDisplay, lastQuestionToDisplay);
         fg = this.toFormGroup(q);
@@ -165,13 +165,13 @@ export class MetaformService {
             } );
         }
 
-        console.info(`direction: ${direction}, startIndex: ${startIndex}`);
+        // console.info(`direction: ${direction}, startIndex: ${startIndex}`);
 
         // Skip through to find the matching section
         for(let i = startIndex; i < form.sections.length; i += direction ) {
-            console.debug(`> Index is ${i}`);
+            // console.debug(`> Index is ${i}`);
             if( this.isSectionValid( form.sections[i], dataSource )) {
-                console.info(`> Got section with index ${i}`);
+                // console.info(`> Got section with index ${i}`);
                 matchingSection = form.sections[i];
                 break;
             }
@@ -198,9 +198,9 @@ export class MetaformService {
     private isSectionValid( section: MetaformSection, dataSource: IBusinessRuleData ) : boolean {
         let hasRules = (section.ruleToMatch !== undefined);
 
-        if( hasRules ) {
-            console.debug(`s.ruleToMatch = ${section.ruleToMatch}`);
-        }
+        // if( hasRules ) {
+        //     console.debug(`s.ruleToMatch = ${section.ruleToMatch}`);
+        // }
 
         // If this section has a rule and it evaluates true, OR we do not have a rule,
         // that's our next section
