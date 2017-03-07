@@ -50,7 +50,8 @@ export class Question<T> {
   required: boolean;
   order: number;
   controlType: string;
-  
+  options?: MfOption[];
+
   constructor(options: {
       value?: T,
       key?: string,
@@ -104,12 +105,12 @@ export class MfTelephoneQuestion extends Question<MfTelephoneNumber> {
 
 export class MfOptionSelection extends Question<MfOption> {
     //private options: MfOption[];
-    controlType = 'dropdown';
+    controlType = 'optionselect';
     options:MfOption[] = [];    
 
     constructor(options: {} = {}) {
         super(options);
-        this.options = options['type'] || '';
+        this.options = options['options'] || '';
     }
 }
 

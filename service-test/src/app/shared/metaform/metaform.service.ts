@@ -134,17 +134,15 @@ export class MetaformService {
 		let group: any = {};
 		let questions:MfQuestion[] = questionsToDisplay;
 		
-		// Depending on whether we're desktop or not indicates
-		// whether we are displaying only one question, or all
-		// questions in a 'section'
-		
-		// questions.forEach(question => {
-		// 	group[question.key] = question.required 
-		// 		? 
-		// 			new FormControl(question.value || '', Validators.required)
-		// 		: 
-		// 			new FormControl(question.value || '');
-		// });
+		questions.forEach(question => {
+            question.items.forEach( item => {
+                group[item.key] = item.required 
+                    ? 
+                        new FormControl(item.value || '', Validators.required)
+                    : 
+                        new FormControl(item.value || '');
+            });
+		});
 
 		return new FormGroup(group);
 	}
@@ -287,7 +285,25 @@ export class MetaformService {
                                 required: true 
                             }
                         ]
-                    }                    
+                    },
+                    {
+                        caption: '',
+                        name: 'options',
+                        items: [
+                            { 
+                                controlType: 'optionselect', 
+                                label: 'someopt', 
+                                key: 'someopt', 
+                                order: 1,
+                                value: "",
+                                options: [
+                                    { code: 'Y', description: 'Yes, Lloyd, I\'m ready to be heartbroken'},
+                                    { code: 'N', description: '\'cause I can\'t see further than my feet at this moment'}
+                                ],
+                                required: true 
+                            }
+                        ]
+                    }                                         
                 ]
             },
             {
