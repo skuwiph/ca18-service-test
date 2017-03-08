@@ -1,5 +1,3 @@
-//import { IBusinessRule } from '../rule/business-rule';
-
 export class Metaform {
     name: string;
     version: number;

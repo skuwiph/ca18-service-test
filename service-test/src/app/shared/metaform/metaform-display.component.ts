@@ -14,7 +14,7 @@ import { Metaform, MetaformSection, MfQuestion } from './metaform';
 import { WindowSize } from '../framework/window-size';
 
 // https://angular.io/docs/ts/latest/cookbook/dynamic-form.html
-// TODO(ian): add the inividual displays for each component question
+// TODO(ian): add the individual displays for each component question
 
 @Component({
     templateUrl: './metaform-display.component.html',
@@ -22,22 +22,6 @@ import { WindowSize } from '../framework/window-size';
 })
 
 export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProcess {
-    title: string;
-    subtitle: string;
-
-    formName: string;
-    
-    form: Metaform;
-    formGroup: FormGroup;
-    checkModifiedAfter: Date;
-    
-    isReducedSize: boolean;
-
-    currentSection: MetaformSection;
-    questionsToDisplay: MfQuestion[];
-    firstQuestionToDisplay: number;
-    atEnd: boolean;
-
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -57,44 +41,34 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         // TODO(ian): Decide whether we want this done differently, for example
         // within the formService itself...
         this.windowSize.width$.subscribe( x => { 
-            console.debug("Size update");
-            this.isReducedSize = (window.innerWidth <= 800);
+            this.isMobile = (window.innerWidth <= 800);
             }
         );
 
-        console.debug(`MetaformDisplayComponent: Route Params: ${this.route.snapshot.params['formName']}`);
-
         this.formName = this.route.snapshot.params['formName'];
-
-        // Read form
         this.form = this.formService.loadForm(this.formName);
-        console.log("Got form");
-        this.checkModifiedAfter = this.form.checkModifiedAfter;
-        //this.currentSection = this.form.sections[0];
 
         let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
-
-        console.debug(`On sequence ${step.id} with title '${step.title}. Total number of questions is ${this.form.totalQuestionCount}`);
-
         this.title = step.title;
 
         this.displayQuestions();        
-
-        // IMPORTANT: the metaform code has to determine how many possible steps
-        // there are, and use that value to calculate % complete; the tracker
-        // won't know itself and is not responsible for determining how many pages
-        // there are in a form
-
     }
 
     ngOnDestroy() : void {
         this.trackerService.removeProcessHost(this);
     }
 
+    processTotalSteps(): number {
+        return this.form.totalQuestionCount;
+    }
+
+    processCurrentStep(): number {
+        return this.currentQuestion + 1;
+    }
+
     handleNavigateNext(): boolean {
         // Get next question
         if( !this.atEnd ) {
-            console.debug("MetaformDisplayComponent is handling next");
             this.displayQuestions();
         } else {
             return false;
@@ -104,25 +78,44 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     }
 
     handleNavigatePrevious(): boolean {
-        console.debug("MetaformDisplayComponent is handling previous");
         this.displayQuestions(-1);
+
         return true;
     }
 
     private displayQuestions(direction: number = +1 ) {
-        let result = this.formService.whatToRender(this.form, this.currentSection, this.applicationService, this.firstQuestionToDisplay, this.isReducedSize, direction);
+        let result = this.formService.whatToRender(this.form, this.currentSection, this.applicationService, this.firstQuestionToDisplay, this.isMobile, direction);
 
         this.currentSection = result[0];
         this.firstQuestionToDisplay = result[1];
         this.questionsToDisplay = result[2].slice(0);
         this.formGroup = result[3];
-        this.atEnd = result[4];
+        this.atStart = result[4];
+        this.atEnd = result[5];
+        this.currentQuestion = result[6];
 
         this.subtitle = this.currentSection.title;
-        console.log(`current sequence id : ${this.trackerService.currentSequenceId}, ${this.trackerService.currentSequenceStepId}`);
     }
 
     onSubmit() {
         // this.payLoad = JSON.stringify(this.form.value);
     }
+
+    title: string;
+    subtitle: string;
+
+    formName: string;
+    
+    form: Metaform;
+    formGroup: FormGroup;
+    
+    isMobile: boolean;
+
+    currentSection: MetaformSection;
+    questionsToDisplay: MfQuestion[];
+    firstQuestionToDisplay: number;
+    currentQuestion: number;
+    
+    atStart: boolean;
+    atEnd: boolean;
 }

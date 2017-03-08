@@ -1,9 +1,9 @@
 <div [formGroup]="formGroup" class="form-group">
-    <label *ngIf="hasLabel" class="block" [attr.for]="question.key"><strong>{{question.label}}</strong></label>
+    <label *ngIf="hasLabel" [attr.for]="question.key"><strong>{{question.label}}</strong></label>
   
     <div [ngSwitch]="question.controlType">
 
-        <input *ngSwitchCase="'textbox'" [id]="question.key" class="form-control" [formControlName]="question.key" [type]="question.type">
+        <input *ngSwitchCase="'textbox'" [id]="question.key" class="form-control" [formControlName]="question.key" [type]="question.type" placeholder="{{question.label}}">
 
 
         <select *ngSwitchCase="'dropdown'" [id]="question.key" class="form-control" [formControlName]="question.key">

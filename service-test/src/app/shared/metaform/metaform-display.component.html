@@ -1,3 +1,4 @@
+<tracker-progress></tracker-progress>
 <div class="content-wrapper">
     <h3>{{ title }}</h3>
     <div class="question-block">
@@ -8,19 +9,21 @@
                 </div>
             </div>
         </div>
-        <div *ngFor="let question of questionsToDisplay">
-            <div class="question-block">
-                <!-- captions are optional for certain questions -->
-                <div *ngIf="question.caption">{{ question.caption }}</div>
-                <div *ngFor="let mq of question.items">
-                    <!-- There should be some form of inline ability -->
-                    <!-- otherwise we layout items on separate lines -->
-                    <div class="form-row">
-                         <mf-question [question]="mq" [formGroup]="formGroup"></mf-question>
+        <form [formGroup]="formGroup">
+            <div *ngFor="let question of questionsToDisplay">
+                <div class="question-block">
+                    <!-- captions are optional for certain questions -->
+                    <div *ngIf="question.caption">{{ question.caption }}</div>
+                    <div *ngFor="let mq of question.items">
+                        <!-- There should be some form of inline ability -->
+                        <!-- otherwise we layout items on separate lines -->
+                        <div class="form-row">
+                            <mf-question [question]="mq" [formGroup]="formGroup"></mf-question>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>    
 </div>
 <tracker-buttons></tracker-buttons>

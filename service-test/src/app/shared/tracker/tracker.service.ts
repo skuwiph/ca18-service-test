@@ -1,4 +1,4 @@
-    import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Router,ActivatedRoute  } from '@angular/router';
 
 import { Http } from '@angular/http';
@@ -13,6 +13,9 @@ import { ApplicationSequence, TrackerSequence, TrackerSequenceType, SequenceStep
 export interface ITrackedProcess {
     handleNavigateNext(): boolean;
     handleNavigatePrevious(): boolean;
+
+    processTotalSteps(): number;
+    processCurrentStep(): number;
 }
 
 @Injectable()
@@ -35,6 +38,14 @@ export class TrackerService implements ITrackedProcess {
             throw new Error("The process host being removed is not the one we were expecting! Check that all hosts have a call to this function in ngOnDestroy();");
 
         this.trackedProcess = this;
+    }
+
+    processTotalSteps(): number {
+        return 1;
+    }
+
+    processCurrentStep(): number {
+        return 1;
     }
 
     handleNavigateNext(): boolean {
@@ -314,7 +325,10 @@ export class TrackerService implements ITrackedProcess {
     public currentSequence: ApplicationSequence;
     public currentSequenceId: number;
     public currentSequenceStepId: number;
-    public progressPercent: number = 0;
+
+    public get progressPercent(): number {
+        return (this.trackedProcess.processCurrentStep() / this.trackedProcess.processTotalSteps() ) * 100;
+    }
 
     private trackedProcess: ITrackedProcess;
 }

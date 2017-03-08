@@ -20,6 +20,12 @@ export class MetaformService {
 		private ruleService: BusinessRuleService
     ) {}
 
+    /**
+     * Load a metaform by nane
+     * @param name (string) - the name of the form to load from storage or network
+     * @returns (Metaform) - the loaded form or null.
+     * @throws (Error) - if the JSON parse fails or the form is not found.
+     */
 	loadForm( name: string ) : Metaform {
 		// First, check localStorage, and then check to see whether 
         // there's a newer version on the server
@@ -29,9 +35,8 @@ export class MetaformService {
 		if( localStorage.getItem(`mf:${name}`) ) {
             try {
 			    form =  JSON.parse( localStorage.getItem(`mf:${name}`) );
-			    console.debug(`Form is ${form.name}, check after ${form.checkModifiedAfter}`);
             } catch (error) {
-                console.error(`JSON.parse failed: ${error}`);
+                throw new Error(`JSON.parse failed: ${error}`);
             }
 		}
 
@@ -57,7 +62,11 @@ export class MetaformService {
 		return form;
 	}
 
-	// Insert data into each question control
+	/**
+     * Insert data into each question control
+     * @param form (Metaform) - the metaform to populate
+     * @param dataSource (IBusinessRuleData) an object containing the data to load
+     */
 	loadFormData( form: Metaform, dataSource: IBusinessRuleData ) : void {
 		// Probably not the best implementation
         for(let s of form.sections) {
@@ -70,46 +79,59 @@ export class MetaformService {
         }
 	}
 
-
+    /**
+     * Discover what to render in the display component
+     * @param form - the loaded form itself
+     * @param section - the current section (if null, assume first section in form)
+     * @param dataSource - where to find data for any business rule checking
+     * @param startQuestion - which question to start display from (send returned value at index 1)
+     * @param isMobile - are we displaying on a small screen
+     * @param direction - are we moving forwards (+1) or backwards (-1) through the form
+     * 
+     * @returns ([the new current section, the first question displayed, the question array, the generated form group array, whether we are at the end of the question array, the current question count for progress checking])
+     */
     whatToRender( 
         form: Metaform, 
         section: MetaformSection, 
         dataSource: IBusinessRuleData, 
-        firstQuestionToDisplay: number, 
+        startQuestion: number, 
         isMobile: boolean,
         direction: number = +1
     ) 
-    : [MetaformSection, number, MfQuestion[], FormGroup, boolean] {
+    : [MetaformSection, number, MfQuestion[], FormGroup, boolean, boolean, number] {
         let currentSection = section;
         let q: MfQuestion[] = [];
         let fg: FormGroup;
         let sectionIndex: number;
         let atEndOfForm = false;
+        let atStartOfForm = false;
+        let currentQuestion = 0;
 
-        if( direction < 0 ) firstQuestionToDisplay -= 2;
+        if( direction < 0 ) startQuestion -= 2;
+        let endQuestion = startQuestion + 1;
 
-        let lastQuestionToDisplay = firstQuestionToDisplay + 1;
+        // NOTE(ian): I appreciate there is redundancy in the next couple of 
+        // blocks, but for readability's sake I'm happy to be less particular
 
-        // console.log(`first, last: ${firstQuestionToDisplay}, ${lastQuestionToDisplay}`);
+        // If we don't have a question, grab the first applicable one
+        if( currentSection == null )
+            currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);    
 
-        // Are we stepping beyond our limit?
-        if( currentSection == null 
-        || ( (firstQuestionToDisplay >= currentSection.questions.length && direction > 0)
-        || ( firstQuestionToDisplay <= 0 && direction < 0 ) )  ) {
-            // Get the next available section
-            currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);
-
-            if( direction > 0 ) {
-                firstQuestionToDisplay = 0;
-            } else {
-                if( isMobile ) {
-                    firstQuestionToDisplay = currentSection.questions.length - 1;
-                } else {
-                    firstQuestionToDisplay = 0;
-                }
+        // Depending on direction, are we changing the section?
+        if( direction < 0 ) {
+            // console.log("going back");
+            if( startQuestion < 0 ) {
+                // console.info(`firstQuestion ${startQuestion}`);
+                currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);    
+                startQuestion = currentSection.questions.length - 1;
             }
-            lastQuestionToDisplay = firstQuestionToDisplay + 1;
+        } else {
+            if( startQuestion >= currentSection.questions.length ) {
+                currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);    
+                startQuestion = 0;
+            }
         }
+        endQuestion = startQuestion + 1;
 
         // Get the section index so we know when we're on the last one
         sectionIndex = this.findSectionIndex(form, currentSection);
@@ -117,19 +139,36 @@ export class MetaformService {
         // If we are NOT mobile, we return all questions in the desired section.
         // If we ARE mobile, we return the 'current' question from the 'current' section.
         if( !isMobile ) {
-            lastQuestionToDisplay = currentSection.questions.length;
+            endQuestion = currentSection.questions.length;
         }
 
-        //console.info(`Got section: ${currentSection.title}, sectionCount = ${form.sections.length}, index = ${sectionIndex}, first = ${firstQuestionToDisplay}, last = ${lastQuestionToDisplay}, count = ${currentSection.questions.length}`);
+        //console.info(`Got section: ${currentSection.title}, sectionCount = ${form.sections.length}, index = ${sectionIndex}, first = ${startQuestion}, last = ${endQuestion}, count = ${currentSection.questions.length}`);
 
-        q = currentSection.questions.slice(firstQuestionToDisplay, lastQuestionToDisplay);
+        q = currentSection.questions.slice(startQuestion, endQuestion);
         fg = this.toFormGroup(q);
+        currentQuestion = this.currentQuestionCount(form, sectionIndex, startQuestion);
 
-        atEndOfForm = sectionIndex == form.sections.length - 1 && lastQuestionToDisplay == currentSection.questions.length - 1;
+        atStartOfForm = currentQuestion == 0;
+        atEndOfForm = sectionIndex == form.sections.length - 1 && endQuestion == currentSection.questions.length;
 
-        return [currentSection, lastQuestionToDisplay, q, fg, atEndOfForm];
+        return [currentSection, endQuestion, q, fg, atStartOfForm, atEndOfForm, currentQuestion];
     }
 
+    private currentQuestionCount(form: Metaform, currentSectionIndex: number, startQuestion: number ) : number {
+        let acc = 0;
+
+        for( let i = 0; i < currentSectionIndex; i++) {
+            acc += form.sections[i].questions.length;
+        }
+
+        return acc + startQuestion;
+    }
+
+    /**
+     * Convert the passed array of questions to an Angular FormGroup
+     * @param questionsToDisplay (MfQuestion[]) - the questions to convert to a FormGroup
+     * @returns (FormGroup) - the FormGroup for display purposes
+     */
     private toFormGroup( questionsToDisplay: MfQuestion[] ) : FormGroup {
 		let group: any = {};
 		let questions:MfQuestion[] = questionsToDisplay;
@@ -148,8 +187,6 @@ export class MetaformService {
 	}
 
     private findNextAvailableSection(form: Metaform, startSection: MetaformSection, dataSource: IBusinessRuleData, direction: number = +1 ) : MetaformSection {
-        console.info(`Direction: ${direction}`);
-
         let matchingSection: MetaformSection;
         let startIndex = 0;
 
@@ -163,13 +200,9 @@ export class MetaformService {
             } );
         }
 
-        // console.info(`direction: ${direction}, startIndex: ${startIndex}`);
-
         // Skip through to find the matching section
         for(let i = startIndex; i < form.sections.length; i += direction ) {
-            // console.debug(`> Index is ${i}`);
             if( this.isSectionValid( form.sections[i], dataSource )) {
-                // console.info(`> Got section with index ${i}`);
                 matchingSection = form.sections[i];
                 break;
             }
