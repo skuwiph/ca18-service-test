@@ -40,6 +40,10 @@ class DataSourceForTest implements IBusinessRuleData {
         if( name === 'time' ) return new Date(2017, 1, 1, 10, 59, 0, 0);
         if( name === 'number' ) return 5;
     }
+
+    public setValue(name:string, value: any) {
+
+    }
 }
 
 
@@ -97,29 +101,29 @@ describe('TrackerService', () => {
         expect( appSeq.prioritySequenceId.length == 0 ).toBeTruthy();
     }));
 
-    it('should find the first matching step',
-        inject([Router, TrackerService], (router: Router, service: TrackerService) => { // ...
-        let appsequence = service.loadSequenceForApplication(1, true);
-        let sequence = service.findFirstMatchingSequence(appsequence, allRules, testData);
-        let step = service.findFirstMatchingStep(sequence, allRules, testData);
+    // it('should find the first matching step',
+    //     inject([Router, TrackerService], (router: Router, service: TrackerService) => { // ...
+    //     let appsequence = service.loadSequenceForApplication(1, true);
+    //     let sequence = service.findFirstMatchingSequence(appsequence, allRules, testData);
+    //     let step = service.findFirstMatchingStep(sequence, allRules, testData);
 
-        expect(step.id == 100).toBeTruthy();
-    }));
+    //     expect(step.id == 100).toBeTruthy();
+    // }));
 
-    it('should get the correct url for the first matching step',
-        inject([Router, TrackerService], (router: Router, service: TrackerService) => { // ...
-        let appsequence = service.loadSequenceForApplication(1, true);
-        let sequence = service.findFirstMatchingSequence(appsequence, allRules, testData);
-        let step = service.findFirstMatchingStep(sequence, allRules, testData);
+    // it('should get the correct url for the first matching step',
+    //     inject([Router, TrackerService], (router: Router, service: TrackerService) => { // ...
+    //     let appsequence = service.loadSequenceForApplication(1, true);
+    //     let sequence = service.findFirstMatchingSequence(appsequence, allRules, testData);
+    //     let step = service.findFirstMatchingStep(sequence, allRules, testData);
 
-        const spy = spyOn(router, 'navigate');
+    //     const spy = spyOn(router, 'navigate');
 
-        service.navigateToStep(sequence, step, router); 
+    //     service.navigateToStep(sequence, step, router); 
 
-        // args passed to router.navigate()
-        const navArgs = spy.calls.first().args[0];
-        expect(navArgs[0]).toBe('sequence/page', 'should nav to sequence/page for first step');
-    }));    
+    //     // args passed to router.navigate()
+    //     const navArgs = spy.calls.first().args[0];
+    //     expect(navArgs[0]).toBe('sequence/page', 'should nav to sequence/page for first step');
+    // }));    
   
 });
 

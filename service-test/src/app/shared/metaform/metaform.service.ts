@@ -58,7 +58,7 @@ export class MetaformService {
 
 		return form;
 	}
-    
+
     public getNextQuestionBlock( 
         form:                   Metaform, 
         dataSource:             IBusinessRuleData, 
@@ -82,7 +82,7 @@ export class MetaformService {
             console.log(`Starting at ${lastQuestionDisplayed}`);
 
             // Find the first applicable question        
-            for(let i = lastQuestionDisplayed += direction; i >= 0 && i <= form.questions.length; i += direction ) {
+            for(let i = lastQuestionDisplayed += direction; i >= 0 && i < form.questions.length; i += direction ) {
                 console.info(`Finding question at ${i}`);
                 if( this.isValidQuestion( form.questions, i, dataSource ) ) {
                     console.debug(`Got a valid question: ${i}, ${form.questions[i].caption}`);
@@ -94,8 +94,10 @@ export class MetaformService {
 
             // What happens if we don't get a valid question -- we are at the
             // end of the form process
-            if( firstValid < 0 || firstValid == form.questions.length ) 
-                return null;
+            atStart = ( firstValid < 0 );
+            atEnd   = ( firstValid == form.questions.length );
+                
+
         // } else {
         //     console.log(`Displaying all within the next or previous valid section starting from ${form.questions[lastQuestionDisplayed].caption}`);
         //     let currentSectionId = form.questions[lastQuestionDisplayed].sectionId;
@@ -112,16 +114,19 @@ export class MetaformService {
         //         console.log(`first/last question in new section: ${form.questions[i].sectionId}, ${i}`);
         //     }
         }
+        let displayedQuestions = [];
 
-        let displayedQuestions = form.questions.slice(firstValid, lastValid);
+        if( !atStart && !atEnd ) {
+            displayedQuestions = form.questions.slice(firstValid, lastValid);
 
-        // Ensure data is present
-        displayedQuestions.forEach( q => {
-            q.items.forEach( mq => {
-                var data = dataSource.getValue( mq.key );
-                mq.value = data;
-            })
-        });
+            // Ensure data is present
+            displayedQuestions.forEach( q => {
+                q.items.forEach( mq => {
+                    var data = dataSource.getValue( mq.key );
+                    mq.value = data;
+                })
+            });
+        }
 
         return [
             displayedQuestions,
@@ -220,7 +225,7 @@ export class MetaformService {
     private test_form: Metaform = { 
         checkModifiedAfterTicks: new Date(Date.now()-1000).getTime(), 
         lastModifiedTicks: new Date(Date.now()).getTime(),
-        name: 'A Simple Form', 
+        name: 'Preparing for interview', 
         totalQuestionCount: 0, 
         version: 1,
         sections: [

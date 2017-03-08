@@ -14,6 +14,8 @@ import { StepComponent } from './step.component';
 import { WindowSize } from './shared/framework/window-size';
 import { BusinessRuleService } from './shared/rule/business-rule.service';
 import { ApplicationService } from './shared/application/application.service';
+
+import { TrackerModule } from './shared/tracker/tracker.module';
 import { TrackerService } from './shared/tracker/tracker.service';
 import { MetaformService } from './shared/metaform/metaform.service';
 
@@ -23,6 +25,7 @@ import { MetaformService } from './shared/metaform/metaform.service';
         FormsModule,
         HttpModule,
         NgbModule.forRoot(),
+        TrackerModule,
         routing
     ],
     declarations: [

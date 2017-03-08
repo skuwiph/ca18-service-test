@@ -6,6 +6,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/switchMap';
 
 import { ApplicationService } from '../application/application.service';
+import { IBusinessRuleData } from '../rule/business-rule';
 import { TrackerService, ITrackedProcess } from '../tracker/tracker.service';
 
 import { MetaformService } from './metaform.service';
@@ -34,13 +35,7 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     ngOnInit() {
         this.trackerService.addProcessHost(this);
 
-        // NOTE(ian): Not sure we need to subscribe to this!
-        // TODO(ian): Decide whether we want this done differently, for example
-        // within the formService itself...
-        this.windowSize.width$.subscribe( x => { 
-            this.isMobile = (window.innerWidth <= 800);
-            }
-        );
+        this.windowSize.width$.subscribe( x => { this.isMobile = (window.innerWidth <= 800); });
 
         this.formName = this.route.snapshot.params['formName'];
         this.form = this.formService.loadForm(this.formName);
@@ -51,7 +46,15 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         this.firstDisplayed = 0;
         this.currentQuestion = -1;
 
-        this.displayQuestions();        
+        // NOTE(ian): This may not always be true, based on how far through the applicant
+        // was when they last quit out of the system
+        this.atStart = true;
+        this.atEnd = false;
+        step.currentStep = 0;
+
+        if( !this.atStart && !this.atEnd) {
+            this.displayQuestions();        
+        }
     }
 
     ngOnDestroy() : void {
@@ -59,14 +62,22 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     }
 
     processTotalSteps(): number {
-        return this.form.totalQuestionCount;
+        return this.form.totalQuestionCount + 1;
     }
 
     processCurrentStep(): number {
-        return this.currentQuestion + 1;
+        if( this.atEnd ) {
+            return this.processTotalSteps();
+        } else if ( this.atStart ) {
+            return 0;
+        } else {
+            return this.currentQuestion + 1;
+        }
     }
 
     handleNavigateNext(): boolean {
+        this.atStart = false;
+
         // Get next question
         if( !this.atEnd ) {
             this.displayQuestions();
@@ -78,12 +89,29 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     }
 
     handleNavigatePrevious(): boolean {
-        this.displayQuestions(false);
+
+        if( !this.atStart ) {
+            console.log(`Not at start`);
+            this.displayQuestions(false);
+        } else {
+            console.log(`At start`);
+            return false;
+        }
 
         return true;
     }
+    
+    getBusinessRuleDataForTracker() : IBusinessRuleData {
+        return this.applicationService;
+    }
+
+    getActiveRoute(): ActivatedRoute { return this.route; }
+    getRouter() : Router { return this.router; }
 
     private displayQuestions( forward = true ) {
+        // TODO(ian): override display type 
+        this.isMobile = true;
+
         let result = this.formService.getNextQuestionBlock(this.form, this.applicationService, this.isMobile, this.currentQuestion, forward);
 
         this.questionsToDisplay = result[0];
@@ -91,22 +119,15 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         this.atStart = result[2];
         this.atEnd = result[3];
 
-        this.formGroup = this.formService.toFormGroup( this.questionsToDisplay );
-        this.currentSection = this.formService.getSectionForQuestion( this.form, this.questionsToDisplay[0]);
+        console.info(`Current = ${this.currentQuestion}`);
 
-        // let result = this.formService.whatToRender(this.form, this.currentSection, this.applicationService, this.firstQuestionToDisplay, this.isMobile, direction);
+        if( !this.atStart && !this.atEnd ) {
+            this.formGroup = this.formService.toFormGroup( this.questionsToDisplay );
+            this.currentSection = this.formService.getSectionForQuestion( this.form, this.questionsToDisplay[0]);
+            this.subtitle = this.currentSection.title;
+        }
 
-        // this.currentSection = result[0];
-        // this.firstQuestionToDisplay = result[1];
-        // this.questionsToDisplay = result[2].slice(0);
-        // this.formGroup = result[3];
-        // this.atStart = result[4];
-        // this.atEnd = result[5];
-        // this.currentQuestion = result[6];
-
-        this.subtitle = this.currentSection.title;
-
-        this.payLoad = JSON.stringify(this.form);
+        //this.payLoad = JSON.stringify(this.form);
     }
 
     valueChanged(event: MfValueChangeEvent) {

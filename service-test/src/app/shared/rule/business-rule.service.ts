@@ -13,6 +13,9 @@ export class BusinessRuleService {
         // Read from Http if null;
         if( rules == null ) {
             console.debug(`Reading Http for rules will be necessary`);
+
+            // TODO(ian): Narf. No rules yet!
+            rules = [];
         }
 
         return rules;
