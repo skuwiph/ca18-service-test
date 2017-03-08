@@ -41,7 +41,9 @@ export class MetaformService {
 		}
 
 		// Check version, but only if checkAfter is after now..
-		if( form === undefined || form.checkModifiedAfter > Date.now() ) {
+        console.log(`Checking form modified`);
+		if( form === undefined || this.isModified(form) ) {
+            console.log('undefined or ready to check now');
 			form = this.checkUpdatedFormVersion(name);
 		}
 
@@ -52,116 +54,101 @@ export class MetaformService {
 		localStorage.setItem(`mf:${name}`, JSON.stringify(form));
 
         // Calculate total number of questions
-        let count: number = 0;
-        for( let s of form.sections ) {
-            count += s.questions.length;
-        }
-
-        form.totalQuestionCount = count;
+        form.totalQuestionCount = form.questions.length;
 
 		return form;
 	}
+    
+    public getNextQuestionBlock( 
+        form:                   Metaform, 
+        dataSource:             IBusinessRuleData, 
+        defaultDisplay:         boolean, 
+        lastQuestionDisplayed:  number, 
+        isForward:              boolean = true 
+    )
+    : [ MfQuestion[], number, boolean, boolean ]
+     {
+        let direction = isForward ? +1 : -1;
+        let firstValid = isForward ? form.questions.length : -1;
+        let lastValid = 0;
+        let atStart = false;
+        let atEnd = false;
 
-	/**
-     * Insert data into each question control
-     * @param form (Metaform) - the metaform to populate
-     * @param dataSource (IBusinessRuleData) an object containing the data to load
-     */
-	loadFormData( form: Metaform, dataSource: IBusinessRuleData ) : void {
-		// Probably not the best implementation
-        for(let s of form.sections) {
-            for(let q of s.questions) {
-                for(let mq of q.items) {
-                    var data = dataSource.getValue( mq.key );
-                    mq.value = data;
+        console.info(`getNextQuestionBlock: first = ${firstValid}, lastDisplayed = ${lastQuestionDisplayed}`);
+
+        // We're on mobile, so we must check the rules ourselves and 
+        // only return the one question 
+        if( defaultDisplay ) {
+            console.log(`Starting at ${lastQuestionDisplayed}`);
+
+            // Find the first applicable question        
+            for(let i = lastQuestionDisplayed += direction; i >= 0 && i <= form.questions.length; i += direction ) {
+                console.info(`Finding question at ${i}`);
+                if( this.isValidQuestion( form.questions, i, dataSource ) ) {
+                    console.debug(`Got a valid question: ${i}, ${form.questions[i].caption}`);
+                     firstValid = i;
+                     lastValid = i + 1;
+                     break;
                 }
             }
-        }
-	}
 
-    /**
-     * Discover what to render in the display component
-     * @param form - the loaded form itself
-     * @param section - the current section (if null, assume first section in form)
-     * @param dataSource - where to find data for any business rule checking
-     * @param startQuestion - which question to start display from (send returned value at index 1)
-     * @param isMobile - are we displaying on a small screen
-     * @param direction - are we moving forwards (+1) or backwards (-1) through the form
-     * 
-     * @returns ([the new current section, the first question displayed, the question array, the generated form group array, whether we are at the end of the question array, the current question count for progress checking])
-     */
-    whatToRender( 
-        form: Metaform, 
-        section: MetaformSection, 
-        dataSource: IBusinessRuleData, 
-        startQuestion: number, 
-        isMobile: boolean,
-        direction: number = +1
-    ) 
-    : [MetaformSection, number, MfQuestion[], FormGroup, boolean, boolean, number] {
-        let currentSection = section;
-        let q: MfQuestion[] = [];
-        let fg: FormGroup;
-        let sectionIndex: number;
-        let atEndOfForm = false;
-        let atStartOfForm = false;
-        let currentQuestion = 0;
+            // What happens if we don't get a valid question -- we are at the
+            // end of the form process
+            if( firstValid < 0 || firstValid == form.questions.length ) 
+                return null;
+        // } else {
+        //     console.log(`Displaying all within the next or previous valid section starting from ${form.questions[lastQuestionDisplayed].caption}`);
+        //     let currentSectionId = form.questions[lastQuestionDisplayed].sectionId;
+        //     let i = lastQuestionDisplayed;
+        //     while( i >= 0 && i <= form.questions.length && currentSectionId == form.questions[i].sectionId ) {
+        //         i += direction;
+        //     }
 
-        if( direction < 0 ) startQuestion -= 2;
-        let endQuestion = startQuestion + 1;
-
-        // NOTE(ian): I appreciate there is redundancy in the next couple of 
-        // blocks, but for readability's sake I'm happy to be less particular
-
-        // If we don't have a question, grab the first applicable one
-        if( currentSection == null )
-            currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);    
-
-        // Depending on direction, are we changing the section?
-        if( direction < 0 ) {
-            // console.log("going back");
-            if( startQuestion < 0 ) {
-                // console.info(`firstQuestion ${startQuestion}`);
-                currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);    
-                startQuestion = currentSection.questions.length - 1;
-            }
-        } else {
-            if( startQuestion >= currentSection.questions.length ) {
-                currentSection = this.findNextAvailableSection(form, currentSection, dataSource, direction);    
-                startQuestion = 0;
-            }
-        }
-        endQuestion = startQuestion + 1;
-
-        // Get the section index so we know when we're on the last one
-        sectionIndex = this.findSectionIndex(form, currentSection);
-
-        // If we are NOT mobile, we return all questions in the desired section.
-        // If we ARE mobile, we return the 'current' question from the 'current' section.
-        if( !isMobile ) {
-            endQuestion = currentSection.questions.length;
+        //     if( i < 0 )
+        //         atStart = true;
+        //     else if( i > form.questions.length)
+        //         atEnd = true;
+        //     else {
+        //         console.log(`first/last question in new section: ${form.questions[i].sectionId}, ${i}`);
+        //     }
         }
 
-        //console.info(`Got section: ${currentSection.title}, sectionCount = ${form.sections.length}, index = ${sectionIndex}, first = ${startQuestion}, last = ${endQuestion}, count = ${currentSection.questions.length}`);
+        let displayedQuestions = form.questions.slice(firstValid, lastValid);
 
-        q = currentSection.questions.slice(startQuestion, endQuestion);
-        fg = this.toFormGroup(q);
-        currentQuestion = this.currentQuestionCount(form, sectionIndex, startQuestion);
+        // Ensure data is present
+        displayedQuestions.forEach( q => {
+            q.items.forEach( mq => {
+                var data = dataSource.getValue( mq.key );
+                mq.value = data;
+            })
+        });
 
-        atStartOfForm = currentQuestion == 0;
-        atEndOfForm = sectionIndex == form.sections.length - 1 && endQuestion == currentSection.questions.length;
-
-        return [currentSection, endQuestion, q, fg, atStartOfForm, atEndOfForm, currentQuestion];
+        return [
+            displayedQuestions,
+            firstValid,
+            atStart,
+            atEnd
+            ];
     }
 
-    private currentQuestionCount(form: Metaform, currentSectionIndex: number, startQuestion: number ) : number {
-        let acc = 0;
+    private isValidQuestion( questions: MfQuestion[], index: number, dataSource: IBusinessRuleData ) : boolean {
+        let valid = false;
 
-        for( let i = 0; i < currentSectionIndex; i++) {
-            acc += form.sections[i].questions.length;
+        if( questions[index].ruleToMatch !== undefined ) {
+            console.debug(`Evaluating rule ${questions[index].ruleToMatch}`);
+            valid = this.ruleService.evaluateRule( questions[index].ruleToMatch, dataSource );
+        } else {
+            // No rules, must be valid
+            valid = true;
         }
 
-        return acc + startQuestion;
+        return valid;
+    }
+
+    public getSectionForQuestion( form: Metaform, question: MfQuestion ) : MetaformSection {
+        let sectionIndex = question.sectionId;
+        let section = form.sections.find( s => s.id == sectionIndex );
+        return section;
     }
 
     /**
@@ -169,102 +156,52 @@ export class MetaformService {
      * @param questionsToDisplay (MfQuestion[]) - the questions to convert to a FormGroup
      * @returns (FormGroup) - the FormGroup for display purposes
      */
-    private toFormGroup( questionsToDisplay: MfQuestion[] ) : FormGroup {
+    public toFormGroup( questionsToDisplay: MfQuestion[] ) : FormGroup {
 		let group: any = {};
 		let questions:MfQuestion[] = questionsToDisplay;
 		
 		questions.forEach(question => {
             question.items.forEach( item => {
-                group[item.key] = item.required 
-                    ? 
-                        new FormControl(item.value || '', Validators.required)
-                    : 
-                        new FormControl(item.value || '');
+                group[item.key] = new FormControl(item.value || '', this.validatorsForQuestion(item));
             });
 		});
 
 		return new FormGroup(group);
 	}
 
-    private findNextAvailableSection(form: Metaform, startSection: MetaformSection, dataSource: IBusinessRuleData, direction: number = +1 ) : MetaformSection {
-        let matchingSection: MetaformSection;
-        let startIndex = 0;
+    private validatorsForQuestion( item: Question<any> ) : any {
+        let vals: any[] = [];
 
-        if( startSection ) {
-            form.sections.forEach( (section, index) => {
-                if( section == startSection ) {
-                    startIndex = index + direction;
-                    
-                    if( startIndex < 0 ) startIndex = 0;
+        if( item.required ) {
+            vals.push(Validators.required);
+        }
+
+        if( item.validators !== undefined ) {
+            console.info(`Loading validators for control`);
+            item.validators.forEach( v => {
+                console.info(`Validator is ${v}`);
+                switch( v ) {
+                    case 'Email':
+                        vals.push( EmailValidator.isValidMailFormat )
+                        break;
+                    default:
+                        break;
                 }
-            } );
+            });
         }
 
-        // Skip through to find the matching section
-        for(let i = startIndex; i < form.sections.length; i += direction ) {
-            if( this.isSectionValid( form.sections[i], dataSource )) {
-                matchingSection = form.sections[i];
-                break;
-            }
-        }
-
-        if( !matchingSection )
-            throw new Error("No matchingSection!");
-
-        return matchingSection;
+        if( vals.length == 0 )
+            return '';
+        else
+            return vals;
     }
-
-    private findSectionIndex(form: Metaform, currentSection: MetaformSection ) : number {
-        let sectionIndex = 0;
-
-        form.sections.forEach( (section, index) => {
-            if( section == currentSection ) {
-                sectionIndex = index;
-            }
-        } );
-
-        return sectionIndex;
-    }
-
-    private isSectionValid( section: MetaformSection, dataSource: IBusinessRuleData ) : boolean {
-        let hasRules = (section.ruleToMatch !== undefined);
-
-        // if( hasRules ) {
-        //     console.debug(`s.ruleToMatch = ${section.ruleToMatch}`);
-        // }
-
-        // If this section has a rule and it evaluates true, OR we do not have a rule,
-        // that's our next section
-            if( (hasRules && this.ruleService.evaluateRule(section.ruleToMatch, dataSource) ) 
-            || !hasRules ) {
-                console.log(`--> Matching section is ${section.title}`);
-                return true;
-        }
-
-        return false;
-    }
-
+   
 	// TODO(ian): Determine whether we need to separate out these calls
 	// If it's just as quick to read the entire form JSON and pipe it back,
 	// then we can do that. If it's noticeably faster just to get the Header ETAG
 	// value and check that, that's what we should do.
 	private checkUpdatedFormVersion( name: string ) : Metaform {
 		let m = new Metaform();
-
-		// m.name = name;
-		// m.version = 1;
-		// m.lastModified = new Date( Date.now() );
-		// m.checkModifiedAfter = new Date( Date.now() + 10000 );
-
-		// let items: Question<any>[] = [];
-
-		// let fn = new MfTextQuestion( { key: "firstName", label: "First name", required: true} );
-		// let ln = new MfTextQuestion( { key: "lastName", label: "Last name", required: true} );
-		// items.push(fn);
-		// items.push(ln);
-
-		// let q1 = new MfQuestion("FullName", items, "Please enter your full name")
-		// // m.questions.push(q1);
 
         console.debug(`returning test_form`);
 
@@ -273,113 +210,141 @@ export class MetaformService {
 		return m;
 	}
 
+    private isModified(form: Metaform) : boolean {
+        let checkAfter: number = form.checkModifiedAfterTicks * 10000;
+        let now: number = new Date(Date.now()).getTime() * 10000;
+
+        return checkAfter > now;
+    }
+
     private test_form: Metaform = { 
-        checkModifiedAfter: new Date( Date.now() + 10000 ), 
-        lastModified: new Date( Date.now() ), 
+        checkModifiedAfterTicks: new Date(Date.now()-1000).getTime(), 
+        lastModifiedTicks: new Date(Date.now()).getTime(),
         name: 'A Simple Form', 
         totalQuestionCount: 0, 
         version: 1,
         sections: [
             {
+                id: 1,
                 title: 'About you',
-                questions: [
-                    {
-                        caption: 'This is a question caption for the attached questions',
-                        name: 'Meaningless?',
-                        items: [
-                            { 
-                                controlType: 'textbox', 
-                                label: 'First name', 
-                                key: 'firstName', 
-                                order: 1,
-                                value: "",
-                                required: true 
-                            },
-                            { 
-                                controlType: 'textbox', 
-                                label: 'Last name', 
-                                key: 'lastName', 
-                                order: 2,
-                                value: "",
-                                required: true 
-                            }
-                        ]
-                    },                    
-                    {
-                        caption: 'Another caption for the email question',
-                        name: 'email',
-                        items: [
-                            { 
-                                controlType: 'textbox', 
-                                label: 'Email', 
-                                key: 'email', 
-                                order: 1,
-                                value: "",
-                                required: true 
-                            }
-                        ]
+            },
+            {
+                id: 2,
+                title: 'About your Lungfish',
+            }
+        ],
+        questions: [
+            {
+                sectionId: 1,
+                caption: 'This is a question caption for the attached questions',
+                name: 'Meaningless?',
+                items: [
+                    { 
+                        controlType: 'textbox', 
+                        label: 'First name', 
+                        key: 'firstName', 
+                        order: 1,
+                        value: "",
+                        required: true 
                     },
-                    {
-                        caption: '',
-                        name: 'options',
-                        items: [
-                            { 
-                                controlType: 'optionselect', 
-                                label: 'someopt', 
-                                key: 'someopt', 
-                                order: 1,
-                                value: "",
-                                options: [
-                                    { code: 'Y', description: 'Yes, Lloyd, I\'m ready to be heartbroken'},
-                                    { code: 'N', description: '\'cause I can\'t see further than my feet at this moment'}
-                                ],
-                                required: true 
-                            }
-                        ]
-                    }                                         
+                    { 
+                        controlType: 'textbox', 
+                        label: 'Last name', 
+                        key: 'lastName', 
+                        order: 2,
+                        value: "",
+                        required: true 
+                    }
+                ]
+            },                    
+            {
+                sectionId: 1,
+                caption: 'Another caption for the email question',
+                name: 'email',
+                items: [
+                    { 
+                        controlType: 'email', 
+                        label: 'Email', 
+                        key: 'email', 
+                        order: 1,
+                        value: "",
+                        required: true,
+                        validators: ['Email']
+                    }
                 ]
             },
             {
-                title: 'About your Lungfish',
-                questions: [
-                    {
-                        caption: 'Here\'s the first question from the second section',
-                        name: 'fishTelephone',
-                        items: [
-                            { 
-                                controlType: 'dropdown', 
-                                label: 'Country Code', 
-                                key: 'iddCode', 
-                                order: 1,
-                                value: "",
-                                required: true 
-                            },
-                            { 
-                                controlType: 'textbox', 
-                                label: 'Number', 
-                                key: 'telephoneNumber', 
-                                order: 2,
-                                value: "",
-                                required: true 
-                            }
-                        ]
-                    },                    
-                    {
-                        caption: 'A last question from section #2',
-                        name: 'fishColour',
-                        items: [
-                            { 
-                                controlType: 'options', 
-                                label: 'Colour', 
-                                key: 'fishColour', 
-                                order: 1,
-                                value: "",
-                                required: true 
-                            }
-                        ]
-                    }                    
+                sectionId: 1,
+                caption: '',
+                name: 'options',
+                items: [
+                    { 
+                        controlType: 'optionselect', 
+                        label: 'Are you ready to be heartbroken?', 
+                        key: 'heartbreak', 
+                        order: 1,
+                        value: "",
+                        options: [
+                            { code: 'Y', description: 'Yes, Lloyd, I\'m ready to be heartbroken'},
+                            { code: 'N', description: '\'cause I can\'t see further than my feet at this moment'}
+                        ],
+                        required: true 
+                    }
                 ]
-            }            
+            },
+            {
+                sectionId: 2,
+                caption: 'Here\'s the first question from the second section',
+                name: 'fishTelephone',
+                items: [
+                    { 
+                        controlType: 'dropdown', 
+                        label: 'Country Code', 
+                        key: 'iddCode', 
+                        order: 1,
+                        value: "",
+                        required: true 
+                    },
+                    { 
+                        controlType: 'textbox', 
+                        label: 'Number', 
+                        key: 'telephoneNumber', 
+                        order: 2,
+                        value: "",
+                        required: true 
+                    }
+                ]
+            },                    
+            {
+                sectionId: 2,
+                caption: 'A last question from section #2',
+                name: 'fishColour',
+                items: [
+                    { 
+                        controlType: 'options', 
+                        label: 'Colour', 
+                        key: 'fishColour', 
+                        order: 1,
+                        value: "",
+                        required: true 
+                    }
+                ]
+            }                    
         ]
     };
 }
+
+export class EmailValidator {
+
+   static isValidMailFormat(control: FormControl){
+        let EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+
+        if (control.value != "" && (control.value.length <= 5 || !EMAIL_REGEXP.test(control.value))) {
+            return { "Please provide a valid email": true };
+        }
+
+        return null;
+    }
+
+}
+

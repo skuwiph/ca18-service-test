@@ -18,7 +18,7 @@
                         <!-- There should be some form of inline ability -->
                         <!-- otherwise we layout items on separate lines -->
                         <div class="form-row">
-                            <mf-question [question]="mq" [formGroup]="formGroup"></mf-question>
+                            <mf-question [question]="mq" [formGroup]="formGroup" (valueChanged)="valueChanged($event)"></mf-question>
                         </div>
                     </div>
                 </div>
@@ -27,3 +27,4 @@
     </div>    
 </div>
 <tracker-buttons></tracker-buttons>
+<pre>{{payLoad}}</pre>

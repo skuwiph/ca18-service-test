@@ -128,6 +128,7 @@ export class BusinessRulePart {
 export interface IBusinessRuleData {
     initialise(): void;
     getValue( name: string ): any;
+    setValue( name: string, value: any );
 }
 
 export enum RuleMatchType {

@@ -1,18 +1,16 @@
 export class Metaform {
     name: string;
     version: number;
-    lastModified: Date;
-    checkModifiedAfter = new Date( Date.now() );
+    lastModifiedTicks: number;
+    checkModifiedAfterTicks: number;
     
     sections: MetaformSection[] = [];
+    questions: MfQuestion[] = [];
 
     // For the tracker: how many questions in total
     // do we have, regardless of whether they are
     // valid according to the rules
-    totalQuestionCount: number;
-
-    // // Retire!
-    // questions: MfQuestion[] = [];
+    totalQuestionCount?: number;
 }
 
 // A section represents a number of grouped questions.
@@ -20,8 +18,8 @@ export class Metaform {
 // probably be displayed. In the mobile version, however, we 
 // will only display one at a time.
 export class MetaformSection {
+    id: number;
     title: string;              // Used in displays
-    questions: MfQuestion[] = [];
     ruleToMatch?: string;
 }
 
@@ -29,6 +27,7 @@ export class MetaformSection {
 // in the case of a telephone number, it must contain
 // a country code selector AND a textbox.
 export class MfQuestion {
+    sectionId: number;
     name: string;
     caption?: string;
     ruleToMatch?: string;
@@ -49,6 +48,7 @@ export class Question<T> {
   order: number;
   controlType: string;
   options?: MfOption[];
+  validators?: string[];
 
   constructor(options: {
       value?: T,
@@ -56,7 +56,9 @@ export class Question<T> {
       label?: string,
       required?: boolean,
       order?: number,
-      controlType?: string
+      controlType?: string,
+      options?: MfOption[],
+      validators?: string[]
     } = {}
 ) {
     this.value = options.value;
@@ -65,6 +67,8 @@ export class Question<T> {
     this.required = !!options.required;
     this.order = options.order === undefined ? 1 : options.order;
     this.controlType = options.controlType || '';
+    this.options = options.options || undefined;
+    this.validators = options.validators || undefined;
   }
 }
 
@@ -115,4 +119,14 @@ export class MfOptionSelection extends Question<MfOption> {
 export class MfOption {
     code: string;
     description: string;
+}
+
+export class MfValueChangeEvent {
+    name: string;
+    value: any;
+
+    constructor(name: string, value: any) {
+        this.name = name;
+        this.value = value;
+    }
 }

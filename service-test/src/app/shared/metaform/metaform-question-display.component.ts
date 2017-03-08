@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Question } from './metaform';
+import { Question, MfOption, MfValueChangeEvent } from './metaform';
 
 @Component({
     moduleId: module.id,
@@ -11,9 +11,10 @@ import { Question } from './metaform';
 export class MetaformQuestionDisplayComponent {
     @Input() question: Question<any>;
     @Input() formGroup: FormGroup;
+    @Output() valueChanged = new EventEmitter<MfValueChangeEvent>();
 
     get isValid() { 
-        if( this.formGroup.pristine ) {
+        if( this.formGroup.controls[this.question.key].pristine ) {
             return true;
         } else {        
             return this.formGroup.controls[this.question.key].valid; 
@@ -24,6 +25,36 @@ export class MetaformQuestionDisplayComponent {
         return this.question.label !== undefined && this.question.label !== null; 
     }
 
-    // TODO(ian): Add an 'ispicked' and something for the choice colour?
+    optionSelected(itemOption: MfOption) {
+        return this.formGroup.controls[this.question.key].value == itemOption.code;
+    }
     
+    // TODO(ian): define some better class names for options
+    optionClass(index: number){
+        switch(index) {
+            case 0:
+                return "alert-primary";
+            case 1:
+                return "alert-secondary";
+            case 2:
+                return "alert-tertiary";
+            default:
+                return "alert";
+        }
+    }
+
+    onTextChange(event) {
+        console.debug(`newValue: ${event.target.value}`);
+        this.updateValue(this.question.key, event.target.value );
+    }
+
+    selectOption(itemOption: MfOption) {
+        this.updateValue(this.question.key, itemOption.code );
+    }
+
+    private updateValue(key: string, value: any){
+        this.formGroup.controls[key].setValue( value );
+        this.valueChanged.emit(new MfValueChangeEvent( key, value ) );
+    }
+
 }

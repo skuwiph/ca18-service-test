@@ -9,7 +9,7 @@ import { ApplicationService } from '../application/application.service';
 import { TrackerService, ITrackedProcess } from '../tracker/tracker.service';
 
 import { MetaformService } from './metaform.service';
-import { Metaform, MetaformSection, MfQuestion } from './metaform';
+import { Metaform, MetaformSection, MfQuestion, MfValueChangeEvent } from './metaform';
 
 import { WindowSize } from '../framework/window-size';
 
@@ -29,10 +29,7 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         private applicationService: ApplicationService,
         private trackerService: TrackerService,
         private formService: MetaformService
-    ) {
-        // Initialise the first question
-        this.firstQuestionToDisplay = 0;
-     }
+    ) {}
 
     ngOnInit() {
         this.trackerService.addProcessHost(this);
@@ -50,6 +47,9 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
 
         let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
         this.title = step.title;
+
+        this.firstDisplayed = 0;
+        this.currentQuestion = -1;
 
         this.displayQuestions();        
     }
@@ -78,23 +78,40 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     }
 
     handleNavigatePrevious(): boolean {
-        this.displayQuestions(-1);
+        this.displayQuestions(false);
 
         return true;
     }
 
-    private displayQuestions(direction: number = +1 ) {
-        let result = this.formService.whatToRender(this.form, this.currentSection, this.applicationService, this.firstQuestionToDisplay, this.isMobile, direction);
+    private displayQuestions( forward = true ) {
+        let result = this.formService.getNextQuestionBlock(this.form, this.applicationService, this.isMobile, this.currentQuestion, forward);
 
-        this.currentSection = result[0];
-        this.firstQuestionToDisplay = result[1];
-        this.questionsToDisplay = result[2].slice(0);
-        this.formGroup = result[3];
-        this.atStart = result[4];
-        this.atEnd = result[5];
-        this.currentQuestion = result[6];
+        this.questionsToDisplay = result[0];
+        this.currentQuestion = result[1];
+        this.atStart = result[2];
+        this.atEnd = result[3];
+
+        this.formGroup = this.formService.toFormGroup( this.questionsToDisplay );
+        this.currentSection = this.formService.getSectionForQuestion( this.form, this.questionsToDisplay[0]);
+
+        // let result = this.formService.whatToRender(this.form, this.currentSection, this.applicationService, this.firstQuestionToDisplay, this.isMobile, direction);
+
+        // this.currentSection = result[0];
+        // this.firstQuestionToDisplay = result[1];
+        // this.questionsToDisplay = result[2].slice(0);
+        // this.formGroup = result[3];
+        // this.atStart = result[4];
+        // this.atEnd = result[5];
+        // this.currentQuestion = result[6];
 
         this.subtitle = this.currentSection.title;
+
+        this.payLoad = JSON.stringify(this.form);
+    }
+
+    valueChanged(event: MfValueChangeEvent) {
+        console.info(`value changed: ${event.name} = '${event.value}'`);
+        this.applicationService.setValue(event.name, event.value);
     }
 
     onSubmit() {
@@ -113,9 +130,11 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
 
     currentSection: MetaformSection;
     questionsToDisplay: MfQuestion[];
-    firstQuestionToDisplay: number;
+    firstDisplayed: number;
     currentQuestion: number;
     
     atStart: boolean;
     atEnd: boolean;
+
+    payLoad: string;
 }
