@@ -308,7 +308,11 @@ export class MetaformService {
                         key: 'iddCode', 
                         order: 1,
                         value: "",
-                        required: true 
+                        required: true ,
+                        options: [
+                            { code: '44', description: 'United Kingdom'},
+                            { code: '1', description: 'United States'}
+                        ],                        
                     },
                     { 
                         controlType: 'textbox', 
