@@ -26,7 +26,6 @@ export class MetaformQuestionDisplayComponent {
     }
 
     optionSelected(itemOption: MfOption) {
-        console.info(`SELECTED? ${this.formGroup.controls[this.question.key].value} == ${itemOption.code}`);
         return this.formGroup.controls[this.question.key].value == itemOption.code;
     }
     

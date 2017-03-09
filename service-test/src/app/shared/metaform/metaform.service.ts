@@ -41,9 +41,9 @@ export class MetaformService {
 		}
 
 		// Check version, but only if checkAfter is after now..
-        console.log(`Checking form modified`);
-		if( form === undefined || this.isModified(form) ) {
-            console.log('undefined or ready to check now');
+        // TODO(ian):TEMP - remove when production ready
+		if( true || form === undefined || this.isModified(form) ) {
+            // console.log('undefined or ready to check now');
 			form = this.checkUpdatedFormVersion(name);
 		}
 
@@ -74,18 +74,18 @@ export class MetaformService {
         let atStart = false;
         let atEnd = false;
 
-        console.info(`getNextQuestionBlock: first = ${firstValid}, lastDisplayed = ${lastQuestionDisplayed}`);
+        // console.info(`getNextQuestionBlock: first = ${firstValid}, lastDisplayed = ${lastQuestionDisplayed}`);
 
         // We're on mobile, so we must check the rules ourselves and 
         // only return the one question 
         if( defaultDisplay ) {
-            console.log(`Starting at ${lastQuestionDisplayed}`);
+            // console.log(`Starting at ${lastQuestionDisplayed}`);
 
             // Find the first applicable question        
             for(let i = lastQuestionDisplayed += direction; i >= 0 && i < form.questions.length; i += direction ) {
-                console.info(`Finding question at ${i}`);
+                // console.info(`Finding question at ${i}`);
                 if( this.isValidQuestion( form.questions, i, dataSource ) ) {
-                    console.debug(`Got a valid question: ${i}, ${form.questions[i].caption}`);
+                    // console.debug(`Got a valid question: ${i}, ${form.questions[i].caption}`);
                      firstValid = i;
                      lastValid = i + 1;
                      break;
@@ -99,13 +99,16 @@ export class MetaformService {
                 
 
         // } else {
+        //
+        // NOTE(ian): Remember that the rules in this case need to be expressed 
+        // on the page itself, so we return all questions regardless of any rules
+        //
         //     console.log(`Displaying all within the next or previous valid section starting from ${form.questions[lastQuestionDisplayed].caption}`);
         //     let currentSectionId = form.questions[lastQuestionDisplayed].sectionId;
         //     let i = lastQuestionDisplayed;
         //     while( i >= 0 && i <= form.questions.length && currentSectionId == form.questions[i].sectionId ) {
         //         i += direction;
         //     }
-
         //     if( i < 0 )
         //         atStart = true;
         //     else if( i > form.questions.length)
@@ -136,20 +139,11 @@ export class MetaformService {
             ];
     }
 
-    private isValidQuestion( questions: MfQuestion[], index: number, dataSource: IBusinessRuleData ) : boolean {
-        let valid = false;
-
-        if( questions[index].ruleToMatch !== undefined ) {
-            console.debug(`Evaluating rule ${questions[index].ruleToMatch}`);
-            valid = this.ruleService.evaluateRule( questions[index].ruleToMatch, dataSource );
-        } else {
-            // No rules, must be valid
-            valid = true;
-        }
-
-        return valid;
-    }
-
+    /**
+     * Return the current section object for the passed question
+     * @param form (Metaform) - the current form
+     * @param question (MfQuestion) - the question
+     */
     public getSectionForQuestion( form: Metaform, question: MfQuestion ) : MetaformSection {
         let sectionIndex = question.sectionId;
         let section = form.sections.find( s => s.id == sectionIndex );
@@ -174,6 +168,30 @@ export class MetaformService {
 		return new FormGroup(group);
 	}
 
+    /**
+     * Is the specified question from the array valid for display?
+     * @param questions (MfQuestion[]) - array of questions
+     * @param index (number) - the specific question in the above array to check
+     * @param dataSource (IBusinessRuleData) - data to check any extant rules against
+     */
+    private isValidQuestion( questions: MfQuestion[], index: number, dataSource: IBusinessRuleData ) : boolean {
+        let valid = false;
+
+        if( questions[index].ruleToMatch !== undefined ) {
+            console.debug(`Evaluating rule ${questions[index].ruleToMatch}`);
+            valid = this.ruleService.evaluateRule( questions[index].ruleToMatch, dataSource );
+        } else {
+            // No rules, must be valid
+            valid = true;
+        }
+
+        return valid;
+    }
+
+    /**
+     * Load FormGroup validators for the desired question
+     * @param item (Question) - the question to load validators for
+     */
     private validatorsForQuestion( item: Question<any> ) : any {
         let vals: any[] = [];
 
@@ -215,6 +233,10 @@ export class MetaformService {
 		return m;
 	}
 
+    /**
+     * Is the form we have modified?
+     * @param form (Metaform) 
+     */
     private isModified(form: Metaform) : boolean {
         let checkAfter: number = form.checkModifiedAfterTicks * 10000;
         let now: number = new Date(Date.now()).getTime() * 10000;
@@ -222,6 +244,7 @@ export class MetaformService {
         return checkAfter > now;
     }
 
+    // TEST DATA
     private test_form: Metaform = { 
         checkModifiedAfterTicks: new Date(Date.now()-1000).getTime(), 
         lastModifiedTicks: new Date(Date.now()).getTime(),
