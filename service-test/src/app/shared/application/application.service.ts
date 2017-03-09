@@ -13,7 +13,8 @@ export class ApplicationService implements IBusinessRuleData {
 
         // TODO(ian): have initialise specify the form or sequence it's using?
         this.applicationData.set('firstName','Tomas');
-        this.applicationData.set('heartbreak', 'N');
+        this.applicationData.set('lastName', 'Walker');
+        this.applicationData.set('email', 'twalker@example.com');
     }
 
     // Implementation of IBusinessRuleData interface
@@ -22,16 +23,16 @@ export class ApplicationService implements IBusinessRuleData {
     }
 
     public getValue( name: string ): any {
-        console.info(`Someone's asking for '${name}'`);
+        // console.info(`Someone's asking for '${name}'`);
 
         if( this.applicationData.has(name) ) {
-            console.info(`${name} exists with value ${this.applicationData.get(name)}`);
+            // console.info(`${name} exists with value ${this.applicationData.get(name)}`);
             return this.applicationData.get(name);
         }
     }
 
     public setValue( name: string, value: any ) {
-        console.info(`Someone's setting ${name} to '${value}'`);
+        // console.info(`Someone's setting ${name} to '${value}'`);
 
         this.applicationData.set(name, value);
     }

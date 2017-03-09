@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { IBusinessRuleData, BusinessRule, BusinessRulePart, RuleMatchType, RuleComparison } from './business-rule';
+import { IBusinessRuleData, IBusinessRule, IBusinessRulePart, BusinessRule, BusinessRulePart, RuleMatchType, RuleComparison } from './business-rule';
 
 @Injectable()
 export class BusinessRuleService {
@@ -8,6 +8,8 @@ export class BusinessRuleService {
     constructor() { }
 
     public getCurrentRules() : BusinessRule[] {
+        console.log(`Getting current ruleset`);
+
         let rules: BusinessRule[] = this.getRulesFromStorage();
 
         // Read from Http if null;
@@ -15,14 +17,22 @@ export class BusinessRuleService {
             console.debug(`Reading Http for rules will be necessary`);
 
             // TODO(ian): Narf. No rules yet!
-            rules = [];
+            rules = this.createTestRuleset();
         }
 
         return rules;
     }
 
     public evaluateRule( name: string, data: any ) : boolean {
+        console.info(`Evaluating rule: ${name}`);
+
+        // Check for existence of rules
+        if( this.rules == null || this.rules === undefined )
+            this.rules = this.getCurrentRules();
+
         let r: BusinessRule = this.getRuleByName( name );
+
+        console.info(`Rule part field ${r.name}, checking ${r.matchType}`);
 
         return r.isTrue( data );
     }
@@ -43,8 +53,10 @@ export class BusinessRuleService {
     }
 
     private getRuleByName( name: string ) : BusinessRule {
+        console.info(` Rules count: ${this.rules.length}`);
         for( let r of this.rules ) {
             if( r.name == name ) {
+                console.info(`Found rule with name ${r.name}, parts count: ${r.parts.length}`);
                 return r;
             }
         }
@@ -66,4 +78,22 @@ export class BusinessRuleService {
     }    
 
     private rules: BusinessRule[];
+
+    private createTestRuleset() : BusinessRule[] {
+        let part: BusinessRulePart = new BusinessRulePart();
+        part.name = 'heartbroken';
+        part.comparison = RuleComparison.Equals;
+        part.value = 'Y';
+
+        let rule: BusinessRule = new BusinessRule();
+        rule.name = "ReadyToBeHeartbroken";
+        rule.matchType = RuleMatchType.All;
+
+        rule.addPart(part);
+
+        let rules: BusinessRule[] = [];
+        rules.push(rule);
+
+        return rules;
+    }
 }

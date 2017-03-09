@@ -18,9 +18,14 @@ export interface ITrackedProcess {
     processTotalSteps(): number;
     processCurrentStep(): number;
 
+    processComplete(): boolean;
+
     getBusinessRuleDataForTracker() : IBusinessRuleData;
     getActiveRoute(): ActivatedRoute;
     getRouter() : Router;
+
+    enableNext(): boolean;
+    enablePrevious(): boolean;
 }
 
 @Injectable()
@@ -53,6 +58,13 @@ export class TrackerService implements ITrackedProcess {
     processCurrentStep(): number {
         return 1;
     }
+
+    processComplete(): boolean {
+        return this.processCurrentStep() == this.processTotalSteps();
+    }
+
+    enableNext(): boolean { return true; }
+    enablePrevious(): boolean { return true; }
 
     handleNavigateNext(): boolean {
         console.debug("I'm handling navigation!");
@@ -130,12 +142,12 @@ export class TrackerService implements ITrackedProcess {
 
     enableNextButton(): boolean 
     { 
-        return true; 
+        return this.trackedProcess.enableNext(); 
     }
 
     enablePreviousButton(): boolean 
     { 
-        return true; 
+        return this.trackedProcess.enablePrevious(); 
     }
 
     // // TODO(ian): @ugh
@@ -218,29 +230,22 @@ export class TrackerService implements ITrackedProcess {
             console.info(`Current/Total: ${this.trackedProcess.processCurrentStep()} == ${this.trackedProcess.processTotalSteps()}`);
 
             // Is this sequence complete?
-            if( this.trackedProcess.processCurrentStep() == this.trackedProcess.processTotalSteps() ) {
+            if( this.trackedProcess.processComplete() ) {
                 this.currentSequence.complete = true;
             }
         }
 
-
         // Start on current sequence
         for(let s of this.applicationSequence.sequence) {
-            if( s.complete ) {
-                console.info(`Completed Sequence: ${s.id}`);
-            } else {
-                console.info(`Incomplete Sequence: ${s.id}`);
+            if( !s.complete ) {
                 this.currentSequence = s;
                 this.currentSequence.currentStep = 0;
 
                 // Navigate
                 this.navigateToNextStep( s.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
 
-                // If it's a metaform, we should...?
-                if( s.type == TrackerSequenceType.Metaform ) {
-                    
-            
-                }
+                // Early exit!
+                break;
             }
         }
     }    

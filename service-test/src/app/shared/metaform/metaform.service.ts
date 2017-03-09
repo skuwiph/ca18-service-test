@@ -21,6 +21,75 @@ export class MetaformService {
     ) {}
 
     /**
+     * Is the passed form valid (e.g. complete)?
+     * @param form (Metaform) - the form to check
+     * @param dataSource (IBusinessRuleData) - data to use for any rule evaluation
+     * @returns [boolean, string] - whether the form is valid, and if not a list of the errored items and error reasons
+     */
+    isValid(form: Metaform, dataSource: IBusinessRuleData) : [boolean, string[]] {
+        let errorList: string[] = [];
+        let valid = true;
+
+        // NOTE(ian): we early exit in case of falsehood
+        for( let i = 0; i < form.questions.length; i++) {
+            // Is the question displayable according to the rules?
+            if( this.isQuestionDisplayable(form.questions, i, dataSource) ) {
+                let q = form.questions[i];
+                let result = this.isQuestionValid(q, dataSource);
+
+                if( !result[0] ) {
+                    valid = false;
+                    errorList.concat( result[1] );
+                }
+            }
+        }
+
+        return [valid, errorList];
+    }
+
+    isQuestionValid(q: MfQuestion, dataSource: IBusinessRuleData) : [boolean, string[]] {
+        let isValid = true;
+        let errorList: string[] = [];
+
+        // console.info(`IsQuestionValid? ${q.name}`);
+
+        // Find the validators for the question
+        for( let iq = 0; iq < q.items.length; iq++ ) {
+            let item = q.items[iq];
+            let itemValue = dataSource.getValue(item.key);
+
+            // console.info(`ItemValue: '${itemValue}'`);
+
+            if( item.required && (itemValue === undefined || itemValue == null || itemValue.length == 0) ){
+                errorList.push(`${q.name} is required but is empty`);
+                isValid = false;
+            }
+
+            if( item.validators !== undefined ) {
+                for(let v = 0; v < item.validators.length; v++) {
+                    let val = item.validators[v];
+                    switch( val ) {
+                    case 'Email':
+                        {
+                            if( !EmailValidator.isValid( itemValue ) ) {
+                                errorList.push(`${q.name} does not have a valid email address.`);
+                                isValid = false;
+                            }
+                        } 
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+
+        // console.info(`IsQuestionValid? ${q.name} IS VALID`);
+
+        return [isValid, errorList];
+    }
+
+    /**
      * Load a metaform by nane
      * @param name (string) - the name of the form to load from storage or network
      * @returns (Metaform) - the loaded form or null.
@@ -84,7 +153,7 @@ export class MetaformService {
             // Find the first applicable question        
             for(let i = lastQuestionDisplayed += direction; i >= 0 && i < form.questions.length; i += direction ) {
                 // console.info(`Finding question at ${i}`);
-                if( this.isValidQuestion( form.questions, i, dataSource ) ) {
+                if( this.isQuestionDisplayable( form.questions, i, dataSource ) ) {
                     // console.debug(`Got a valid question: ${i}, ${form.questions[i].caption}`);
                      firstValid = i;
                      lastValid = i + 1;
@@ -174,7 +243,7 @@ export class MetaformService {
      * @param index (number) - the specific question in the above array to check
      * @param dataSource (IBusinessRuleData) - data to check any extant rules against
      */
-    private isValidQuestion( questions: MfQuestion[], index: number, dataSource: IBusinessRuleData ) : boolean {
+    private isQuestionDisplayable( questions: MfQuestion[], index: number, dataSource: IBusinessRuleData ) : boolean {
         let valid = false;
 
         if( questions[index].ruleToMatch !== undefined ) {
@@ -200,9 +269,9 @@ export class MetaformService {
         }
 
         if( item.validators !== undefined ) {
-            console.info(`Loading validators for control`);
+            //console.info(`Loading validators for control`);
             item.validators.forEach( v => {
-                console.info(`Validator is ${v}`);
+                //console.info(`Validator is ${v}`);
                 switch( v ) {
                     case 'Email':
                         vals.push( EmailValidator.isValidMailFormat )
@@ -309,17 +378,34 @@ export class MetaformService {
                     { 
                         controlType: 'optionselect', 
                         label: 'Are you ready to be heartbroken?', 
-                        key: 'heartbreak', 
+                        key: 'heartbroken', 
                         order: 1,
                         value: "",
                         options: [
                             { code: 'Y', description: 'Yes, Lloyd, I\'m ready to be heartbroken'},
-                            { code: 'N', description: '\'cause I can\'t see further than my feet at this moment'}
+                            { code: 'N', description: 'Why no, no I\'m not, actually'},
+                            { code: 'M', description: 'A third option which doesn\'t make any sense'}
                         ],
-                        required: true 
+                        required: true
                     }
                 ]
             },
+            {
+                sectionId: 1,
+                caption: 'Why on earth are you ready to be heartbroken?',
+                name: 'explainHeartbroken',
+                ruleToMatch: 'ReadyToBeHeartbroken',
+                items: [
+                    { 
+                        controlType: 'multiline', 
+                        label: '', 
+                        key: 'explainHeartbroken', 
+                        order: 1,
+                        value: "",
+                        required: true 
+                    }
+                ]
+            },            
             {
                 sectionId: 2,
                 caption: 'Here\'s the first question from the second section',
@@ -353,12 +439,17 @@ export class MetaformService {
                 name: 'fishColour',
                 items: [
                     { 
-                        controlType: 'options', 
+                        controlType: 'optionselect', 
                         label: 'Colour', 
                         key: 'fishColour', 
                         order: 1,
                         value: "",
-                        required: true 
+                        required: true,
+                        options: [
+                            { code: 'R', description: 'Red'},
+                            { code: 'G', description: 'Green'},
+                            { code: 'B', description: 'Blue'}
+                        ],
                     }
                 ]
             }                    
@@ -368,14 +459,21 @@ export class MetaformService {
 
 export class EmailValidator {
 
-   static isValidMailFormat(control: FormControl){
+   static isValidMailFormat(control: FormControl) {
         let EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
-
         if (control.value != "" && (control.value.length <= 5 || !EMAIL_REGEXP.test(control.value))) {
             return { "Please provide a valid email": true };
         }
-
         return null;
+    }
+
+    static isValid( value: string ) {
+        let EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+        if (value != "" && (value.length <= 5 || !EMAIL_REGEXP.test(value))) {
+            return false;
+        }
+
+        return true;
     }
 
 }

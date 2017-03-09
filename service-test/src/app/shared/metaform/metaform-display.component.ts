@@ -65,6 +65,34 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         return this.form.totalQuestionCount + 1;
     }
 
+    enableNext(): boolean {
+        if( this.atEnd || this.atStart )
+            return true;
+
+        // Need to check all items! 
+        return this.isPageValid();
+    }
+
+    enablePrevious(): boolean {
+        // Probably should ALWAYS be true?
+        return true; 
+    }
+
+    processComplete(): boolean {
+        let result = this.formService.isValid(this.form, this.applicationService);
+        let isValid = result[0];
+        let errorList = result[1];
+
+        console.log(`Metaform: isValid ${isValid}`);
+        if( !isValid ) {
+            errorList.forEach(s => {
+                console.error(s);
+            });
+        }
+
+        return isValid && this.processCurrentStep() == this.processTotalSteps();
+    }
+
     processCurrentStep(): number {
         if( this.atEnd ) {
             return this.processTotalSteps();
@@ -127,7 +155,25 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
             this.subtitle = this.currentSection.title;
         }
 
+        this.pageIsValid = this.isPageValid();
         //this.payLoad = JSON.stringify(this.form);
+    }
+
+    private isPageValid() : boolean {
+        // console.info(`IsPageValid`);
+        for(let q = 0; q < this.questionsToDisplay.length; q++) {
+            let result = this.formService.isQuestionValid(this.questionsToDisplay[q], this.applicationService);
+            let isValid = result[0];
+
+            if( !isValid ) {
+                console.error(`${this.questionsToDisplay[q].name} is not valid!`);
+                return false;
+            } else {
+                console.info(`${this.questionsToDisplay[q].name} IS valid`);
+            }
+        }
+
+        return true;
     }
 
     valueChanged(event: MfValueChangeEvent) {
@@ -156,6 +202,8 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     
     atStart: boolean;
     atEnd: boolean;
+
+    pageIsValid: boolean;
 
     payLoad: string;
 }

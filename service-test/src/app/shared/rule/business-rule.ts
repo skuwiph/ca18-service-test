@@ -1,4 +1,26 @@
-export class BusinessRule {
+export interface IBusinessRuleData {
+    initialise(): void;
+    getValue( name: string ): any;
+    setValue( name: string, value: any );
+}
+
+export interface IBusinessRule {
+    name: string;
+    matchType: RuleMatchType;
+    parts: IBusinessRulePart[];
+}
+
+export interface IBusinessRulePart {
+    name: string;
+    comparison: RuleComparison;
+    value: any;
+
+    // Used only for 'between' comparisons
+    lowerBoundValue: any;
+    upperBoundValue: any;
+}
+
+export class BusinessRule implements IBusinessRule {
     name: string;
     matchType: RuleMatchType;
     isTrue( dataSource: IBusinessRuleData ) : boolean {
@@ -37,11 +59,11 @@ export class BusinessRule {
         this.parts.push( p );
     }
 
-    private parts: BusinessRulePart[] = [];
+    public parts: BusinessRulePart[] = [];
 }
 
 
-export class BusinessRulePart {
+export class BusinessRulePart implements IBusinessRulePart {
     name: string;
     comparison: RuleComparison;
     value: any;
@@ -122,13 +144,6 @@ export class BusinessRulePart {
         return lower.getTime() <= comparedValue.getTime() 
             && upper.getTime() >= comparedValue.getTime();
     }
-}
-
-
-export interface IBusinessRuleData {
-    initialise(): void;
-    getValue( name: string ): any;
-    setValue( name: string, value: any );
 }
 
 export enum RuleMatchType {

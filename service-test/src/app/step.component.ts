@@ -40,6 +40,13 @@ export class StepComponent implements OnInit, OnDestroy, ITrackedProcess {
         return 1;
     }
 
+    processComplete(): boolean {
+        return true;
+    }
+    
+    enableNext(): boolean { return true; }
+    enablePrevious(): boolean { return true; }
+
     handleNavigateNext(): boolean {
         return false;
     }
@@ -52,7 +59,7 @@ export class StepComponent implements OnInit, OnDestroy, ITrackedProcess {
         return this.applicationService;
     }
 
-    getActiveRoute(): ActivatedRoute { return this.route; }
+    getActiveRoute(): ActivatedRoute { console.debug(`Returning ActivatedRoute`); return this.route; }
     getRouter() : Router { return this.router; }
 
     
