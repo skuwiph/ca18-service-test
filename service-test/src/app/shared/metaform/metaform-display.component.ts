@@ -160,16 +160,12 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     }
 
     private isPageValid() : boolean {
-        // console.info(`IsPageValid`);
         for(let q = 0; q < this.questionsToDisplay.length; q++) {
             let result = this.formService.isQuestionValid(this.questionsToDisplay[q], this.applicationService);
             let isValid = result[0];
 
             if( !isValid ) {
-                console.error(`${this.questionsToDisplay[q].name} is not valid!`);
                 return false;
-            } else {
-                console.info(`${this.questionsToDisplay[q].name} IS valid`);
             }
         }
 

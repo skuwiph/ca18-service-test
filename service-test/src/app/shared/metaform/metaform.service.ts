@@ -33,58 +33,59 @@ export class MetaformService {
         // NOTE(ian): we early exit in case of falsehood
         for( let i = 0; i < form.questions.length; i++) {
             // Is the question displayable according to the rules?
-            if( this.isQuestionDisplayable(form.questions, i, dataSource) ) {
-                let q = form.questions[i];
-                let result = this.isQuestionValid(q, dataSource);
+            let q = form.questions[i];
+            let result = this.isQuestionValid(q, dataSource);
 
-                if( !result[0] ) {
-                    valid = false;
-                    errorList.concat( result[1] );
-                }
+            if( !result[0] ) {
+                valid = false;
+                errorList.concat( result[1] );
             }
         }
 
         return [valid, errorList];
     }
 
+    /**
+     * Is the passed question valid according to its rules
+     * @param q (MfQuestion) - the question to check
+     * @param dataSource (IBusinessRuleData) - data to use for any rule evaluation
+     */
     isQuestionValid(q: MfQuestion, dataSource: IBusinessRuleData) : [boolean, string[]] {
         let isValid = true;
         let errorList: string[] = [];
 
-        // console.info(`IsQuestionValid? ${q.name}`);
+        if( this.isQuestionDisplayable(q, dataSource) ) {
+            // Find the validators for the question
+            for( let iq = 0; iq < q.items.length; iq++ ) {
+                let item = q.items[iq];
+                let itemValue = dataSource.getValue(item.key);
 
-        // Find the validators for the question
-        for( let iq = 0; iq < q.items.length; iq++ ) {
-            let item = q.items[iq];
-            let itemValue = dataSource.getValue(item.key);
+                // console.info(`ItemValue: '${itemValue}'`);
 
-            // console.info(`ItemValue: '${itemValue}'`);
+                if( item.required && (itemValue === undefined || itemValue == null || itemValue.length == 0) ){
+                    errorList.push(`${q.name} is required but is empty`);
+                    isValid = false;
+                }
 
-            if( item.required && (itemValue === undefined || itemValue == null || itemValue.length == 0) ){
-                errorList.push(`${q.name} is required but is empty`);
-                isValid = false;
-            }
-
-            if( item.validators !== undefined ) {
-                for(let v = 0; v < item.validators.length; v++) {
-                    let val = item.validators[v];
-                    switch( val ) {
-                    case 'Email':
-                        {
-                            if( !EmailValidator.isValid( itemValue ) ) {
-                                errorList.push(`${q.name} does not have a valid email address.`);
-                                isValid = false;
-                            }
-                        } 
-                        break;
-                    default:
-                        break;
+                if( item.validators !== undefined ) {
+                    for(let v = 0; v < item.validators.length; v++) {
+                        let val = item.validators[v];
+                        switch( val ) {
+                        case 'Email':
+                            {
+                                if( !EmailValidator.isValid( itemValue ) ) {
+                                    errorList.push(`${q.name} does not have a valid email address.`);
+                                    isValid = false;
+                                }
+                            } 
+                            break;
+                        default:
+                            break;
+                        }
                     }
                 }
             }
         }
-
-        // console.info(`IsQuestionValid? ${q.name} IS VALID`);
 
         return [isValid, errorList];
     }
@@ -128,6 +129,14 @@ export class MetaformService {
 		return form;
 	}
 
+    /**
+     * Get the next question(s) for display
+     * @param form (Metaform) - the form to display
+     * @param dataSource (IBusinessRuleData) - data used for display and rules
+     * @param defaultDisplay (boolean) - is a mobile view?
+     * @param lastQuestionDisplayed (number) - index of the last question previously shown
+     * @param isForward (boolean) - are we stepping forwards? Default is TRUE
+     */
     public getNextQuestionBlock( 
         form:                   Metaform, 
         dataSource:             IBusinessRuleData, 
@@ -143,18 +152,12 @@ export class MetaformService {
         let atStart = false;
         let atEnd = false;
 
-        // console.info(`getNextQuestionBlock: first = ${firstValid}, lastDisplayed = ${lastQuestionDisplayed}`);
-
         // We're on mobile, so we must check the rules ourselves and 
         // only return the one question 
         if( defaultDisplay ) {
-            // console.log(`Starting at ${lastQuestionDisplayed}`);
-
             // Find the first applicable question        
             for(let i = lastQuestionDisplayed += direction; i >= 0 && i < form.questions.length; i += direction ) {
-                // console.info(`Finding question at ${i}`);
-                if( this.isQuestionDisplayable( form.questions, i, dataSource ) ) {
-                    // console.debug(`Got a valid question: ${i}, ${form.questions[i].caption}`);
+                if( this.isQuestionDisplayable( form.questions[i], dataSource ) ) {
                      firstValid = i;
                      lastValid = i + 1;
                      break;
@@ -240,15 +243,14 @@ export class MetaformService {
     /**
      * Is the specified question from the array valid for display?
      * @param questions (MfQuestion[]) - array of questions
-     * @param index (number) - the specific question in the above array to check
      * @param dataSource (IBusinessRuleData) - data to check any extant rules against
      */
-    private isQuestionDisplayable( questions: MfQuestion[], index: number, dataSource: IBusinessRuleData ) : boolean {
+    private isQuestionDisplayable( question: MfQuestion, dataSource: IBusinessRuleData ) : boolean {
         let valid = false;
 
-        if( questions[index].ruleToMatch !== undefined ) {
-            console.debug(`Evaluating rule ${questions[index].ruleToMatch}`);
-            valid = this.ruleService.evaluateRule( questions[index].ruleToMatch, dataSource );
+        if( question.ruleToMatch !== undefined ) {
+            console.debug(`Evaluating rule ${question.ruleToMatch}`);
+            valid = this.ruleService.evaluateRule( question.ruleToMatch, dataSource );
         } else {
             // No rules, must be valid
             valid = true;
