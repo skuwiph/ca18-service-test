@@ -99,14 +99,6 @@ export class TrackerService implements ITrackedProcess {
 
             this.findNextStep();
         }
-
-        // if ( this.currentHost !== undefined && !this.enableNextButton() ) return;
-
-        // if ( this.currentHost !== undefined ) {
-        //     this.currentHost.processNextLocally();
-        // }
-        // this.progressPercent++;
-
     }
 
     updateServiceOfCurrentStep() {
@@ -126,17 +118,10 @@ export class TrackerService implements ITrackedProcess {
     }
 
     navigateToPreviousStep( url : any,  router: Router, route: ActivatedRoute ) : void {
-        // TODO(ian): actually have appropriate behaviour here
-        
-        console.log(route.toString());
-        console.log(`TrackerService: Navigating to '${url}'`);
         router.navigateByUrl( url );
     }
 
     navigateToNextStep( url : any,  router: Router, route: ActivatedRoute ) : void {
-        // TODO(ian): actually have appropriate behaviour here
-        console.log(route.toString());
-        console.log(`TrackerService: Navigating to '${url}'`);
         router.navigateByUrl( url );
     }
 
@@ -150,31 +135,14 @@ export class TrackerService implements ITrackedProcess {
         return this.trackedProcess.enablePrevious(); 
     }
 
-    // // TODO(ian): @ugh
-    // // Read the latest sequence item for this application.
-    // // NOTE: Assumes rules are available from the service.
-    // latestSequenceItem( applicationId: number, dataSource: IBusinessRuleData ) : SequenceStep {
-    //     let rules = this.ruleService.getCurrentRules();
-
-    //     let app = this.loadSequenceForApplication( applicationId, true );
-    //     let seq = this.findFirstMatchingSequence(
-    //         app,
-    //         rules,
-    //         dataSource
-    //     );
-    //     let step = this.findFirstMatchingStep( seq, rules, dataSource );
-    //     return step;
-    // }
-
-    // TODO(ian): @ugh
-    // NOTE(ian): return sequence for application
-    // NOTE(ian): should be stored in localStorage
-    loadSequenceForApplication(applicationId: number, forceRead?: boolean) : ApplicationSequence {
-        // console.log(`Read sequence for application ${applicationId}`);
-
+    /**
+     * Get the application's sequence from localStorage or Http
+     * @param applicationId (number) - user's application Id
+     */
+    loadSequenceForApplication(applicationId: number, forceRead: boolean = true) : ApplicationSequence {
         let seq = this.getSequenceFromStorage();
         
-        if( forceRead )
+        if( forceRead || seq.applicationId != applicationId )
             console.debug(`latestSequenceItem is forcing a read from Http`);
 
         if( seq === null || forceRead ) {
@@ -184,16 +152,12 @@ export class TrackerService implements ITrackedProcess {
             localStorage.setItem("Seq", JSON.stringify(seq));
         }
 
-        // this.applicationSequenceId += 1;
-        // console.log(`Current sequence Id = ${this.applicationSequenceId}`)
-
         // Store for our own purposes!
         this.applicationSequence = seq;
 
         return seq;
     }
 
-    
     findPreviousStep() {
         // If a previous step is complete, we should automatically return to the 
         // designated home page
@@ -209,8 +173,6 @@ export class TrackerService implements ITrackedProcess {
             if( s.id === this.currentSequence.id) {
                 // Got this one
                 if( lastSequence === null ) {
-                    console.log("No last sequence, we were at the first!");
-
                     this.navigateToNextStep( this.applicationSequence.homePageUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
                 } else {
                     this.navigateToNextStep( lastSequence.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
@@ -226,8 +188,8 @@ export class TrackerService implements ITrackedProcess {
 
         // Have we finished the current sequence?
         if( this.currentSequence !== undefined ) {
-            console.log(`found current sequence, checking next available step from ${this.currentSequence.title}`);
-            console.info(`Current/Total: ${this.trackedProcess.processCurrentStep()} == ${this.trackedProcess.processTotalSteps()}`);
+            // console.log(`found current sequence, checking next available step from ${this.currentSequence.title}`);
+            // console.info(`Current/Total: ${this.trackedProcess.processCurrentStep()} == ${this.trackedProcess.processTotalSteps()}`);
 
             // Is this sequence complete?
             if( this.trackedProcess.processComplete() ) {
@@ -235,30 +197,32 @@ export class TrackerService implements ITrackedProcess {
             }
         }
 
-        // Start on current sequence
-        for(let s of this.applicationSequence.sequence) {
-            if( !s.complete ) {
-                this.currentSequence = s;
+        this.currentSequence = this.findFirstMatchingSequence(this.applicationService);
+
+        // // Start on current sequence
+        // for(let s of this.applicationSequence.sequence) {
+        //     if( !s.complete ) {
+        //         this.currentSequence = s;
                 this.currentSequence.currentStep = 0;
 
                 // Navigate
-                this.navigateToNextStep( s.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+                this.navigateToNextStep( this.currentSequence.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
 
-                // Early exit!
-                break;
-            }
-        }
+        //         // Early exit!
+        //         break;
+        //     }
+        // }
     }    
 
     // TODO(ian): @ugh
     // NOTE(ian): Given we have a set of sequences, which one should
     // we display next?
     findFirstMatchingSequence( data: IBusinessRuleData ) : TrackerSequence {
-        //let seq = this.getSequenceFromStorage();
-        let matchingSequence: TrackerSequence;
         if( this.applicationSequence === null ) {
             return null;
         }
+
+        let matchingSequence: TrackerSequence;
 
         this.ruleService.setRules(this.ruleService.getCurrentRules());
         let overrideSequence = 0;
@@ -357,6 +321,7 @@ export class TrackerService implements ITrackedProcess {
     }
 
     private sequence: ApplicationSequence = {
+        applicationId: 1, 
         sequence: [
             {id: 1, complete: true, title: 'A completed sequence item', type: TrackerSequenceType.Custom, sequenceIntroPage: 'step', sequenceOutroPage: 'step', routerUrl: '/step'},
             {id: 2, complete: false, title: 'Prepare for interview', type: TrackerSequenceType.Metaform, metaformName: 'this-is-my-form',  sequenceIntroPage: 'start', sequenceOutroPage: 'end', routerUrl: 'form/this-is-my-form'},
@@ -368,9 +333,6 @@ export class TrackerService implements ITrackedProcess {
 
     public applicationSequence: ApplicationSequence;
     public currentSequence: TrackerSequence;
-
-    // public applicationSequenceId: number;
-    // public applicationSequenceStepId: number;
 
     public get progressPercent(): number {
         return (this.trackedProcess.processCurrentStep() / this.trackedProcess.processTotalSteps() ) * 100;

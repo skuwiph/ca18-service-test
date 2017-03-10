@@ -27,7 +27,7 @@ export class BusinessRuleService {
         console.info(`Evaluating rule: ${name}`);
 
         // Check for existence of rules
-        if( this.rules == null || this.rules === undefined )
+        if( !this.rules )
             this.rules = this.getCurrentRules();
 
         let r: BusinessRule = this.getRuleByName( name );
@@ -53,7 +53,6 @@ export class BusinessRuleService {
     }
 
     private getRuleByName( name: string ) : BusinessRule {
-        console.info(` Rules count: ${this.rules.length}`);
         for( let r of this.rules ) {
             if( r.name == name ) {
                 console.info(`Found rule with name ${r.name}, parts count: ${r.parts.length}`);
@@ -68,7 +67,7 @@ export class BusinessRuleService {
         let rules: BusinessRule[] = [];
 
         // TODO(ian): localStorage 
-        if( localStorage.getItem("rules") === undefined ) {
+        if( localStorage.getItem("rules") ) {
             console.log("No rules stored");
         }
 
@@ -80,6 +79,8 @@ export class BusinessRuleService {
     private rules: BusinessRule[];
 
     private createTestRuleset() : BusinessRule[] {
+        let rules: BusinessRule[] = [];
+
         let part: BusinessRulePart = new BusinessRulePart();
         part.name = 'heartbroken';
         part.comparison = RuleComparison.Equals;
@@ -90,8 +91,19 @@ export class BusinessRuleService {
         rule.matchType = RuleMatchType.All;
 
         rule.addPart(part);
+        rules.push(rule);
 
-        let rules: BusinessRule[] = [];
+
+        part = new BusinessRulePart();
+        part.name = 'heartbroken';
+        part.comparison = RuleComparison.NotEquals;
+        part.value = 'Y';
+
+        rule = new BusinessRule();
+        rule.name = "Test String Rule";
+        rule.matchType = RuleMatchType.All;
+
+        rule.addPart(part);
         rules.push(rule);
 
         return rules;

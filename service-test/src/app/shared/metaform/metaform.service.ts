@@ -11,6 +11,7 @@ import 'rxjs/add/operator/map';
 import { BusinessRuleService } from '../rule/business-rule.service';
 import { IBusinessRuleData } from '../rule/business-rule';
 import { Metaform, MetaformSection, MfQuestion, Question, MfTextQuestion } from './metaform';
+import { EmailValidator } from './validator/EmailValidator';
 
 @Injectable()
 export class MetaformService {
@@ -62,12 +63,12 @@ export class MetaformService {
 
                 // console.info(`ItemValue: '${itemValue}'`);
 
-                if( item.required && (itemValue === undefined || itemValue == null || itemValue.length == 0) ){
+                if( item.required && (!itemValue || itemValue.length == 0) ){
                     errorList.push(`${q.name} is required but is empty`);
                     isValid = false;
                 }
 
-                if( item.validators !== undefined ) {
+                if( item.validators ) {
                     for(let v = 0; v < item.validators.length; v++) {
                         let val = item.validators[v];
                         switch( val ) {
@@ -112,7 +113,7 @@ export class MetaformService {
 
 		// Check version, but only if checkAfter is after now..
         // TODO(ian):TEMP - remove when production ready
-		if( true || form === undefined || this.isModified(form) ) {
+		if( true || !form || this.isModified(form) ) {
             // console.log('undefined or ready to check now');
 			form = this.checkUpdatedFormVersion(name);
 		}
@@ -342,7 +343,6 @@ export class MetaformService {
                         controlType: 'textbox', 
                         label: 'First name', 
                         key: 'firstName', 
-                        order: 1,
                         value: "",
                         required: true 
                     },
@@ -350,7 +350,6 @@ export class MetaformService {
                         controlType: 'textbox', 
                         label: 'Last name', 
                         key: 'lastName', 
-                        order: 2,
                         value: "",
                         required: true 
                     }
@@ -365,7 +364,6 @@ export class MetaformService {
                         controlType: 'email', 
                         label: 'Email', 
                         key: 'email', 
-                        order: 1,
                         value: "",
                         required: true,
                         validators: ['Email']
@@ -381,7 +379,6 @@ export class MetaformService {
                         controlType: 'optionselect', 
                         label: 'Are you ready to be heartbroken?', 
                         key: 'heartbroken', 
-                        order: 1,
                         value: "",
                         options: [
                             { code: 'Y', description: 'Yes, Lloyd, I\'m ready to be heartbroken'},
@@ -402,7 +399,6 @@ export class MetaformService {
                         controlType: 'multiline', 
                         label: '', 
                         key: 'explainHeartbroken', 
-                        order: 1,
                         value: "",
                         required: true 
                     }
@@ -417,7 +413,6 @@ export class MetaformService {
                         controlType: 'dropdown', 
                         label: 'Country Code', 
                         key: 'iddCode', 
-                        order: 1,
                         value: "",
                         required: true ,
                         options: [
@@ -429,7 +424,6 @@ export class MetaformService {
                         controlType: 'textbox', 
                         label: 'Number', 
                         key: 'telephoneNumber', 
-                        order: 2,
                         value: "",
                         required: true 
                     }
@@ -444,7 +438,6 @@ export class MetaformService {
                         controlType: 'optionselect', 
                         label: 'Colour', 
                         key: 'fishColour', 
-                        order: 1,
                         value: "",
                         required: true,
                         options: [
@@ -457,26 +450,5 @@ export class MetaformService {
             }                    
         ]
     };
-}
-
-export class EmailValidator {
-
-   static isValidMailFormat(control: FormControl) {
-        let EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
-        if (control.value != "" && (control.value.length <= 5 || !EMAIL_REGEXP.test(control.value))) {
-            return { "Please provide a valid email": true };
-        }
-        return null;
-    }
-
-    static isValid( value: string ) {
-        let EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
-        if (value != "" && (value.length <= 5 || !EMAIL_REGEXP.test(value))) {
-            return false;
-        }
-
-        return true;
-    }
-
 }
 

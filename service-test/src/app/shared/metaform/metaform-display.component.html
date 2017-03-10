@@ -30,8 +30,10 @@
                 </div>
             </div>
         </div>
+
         <form [formGroup]="formGroup">
             <div *ngFor="let question of questionsToDisplay">
+
                 <div class="question-block">
                     <!-- captions are optional for certain questions -->
                     <div *ngIf="question.caption">{{ question.caption }}</div>

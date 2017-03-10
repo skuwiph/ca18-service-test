@@ -19,6 +19,6 @@ import { routing } from './metaform.routing';
     [
         MetaformDisplayComponent,
         MetaformQuestionDisplayComponent
-    ]
+    ]  
 })
 export class MetaformModule { }

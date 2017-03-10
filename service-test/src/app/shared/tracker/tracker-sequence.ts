@@ -1,6 +1,9 @@
 import { BusinessRule } from '../rule/business-rule';
 
 export class ApplicationSequence {
+    // Who's this for
+    applicationId: number;
+
     // The default sequence required
     sequence: TrackerSequence[];
 
@@ -46,6 +49,11 @@ export class TrackerSequence {
         this.routerUrl = url;
     }
 
+}
+
+export class SequencePage {
+    routerUrl: string;
+    
 }
 
 // export class SequenceStep {

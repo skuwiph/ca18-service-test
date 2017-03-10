@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+
 import { FormGroup } from '@angular/forms';
 import { Question, MfOption, MfValueChangeEvent } from './metaform';
 
@@ -25,7 +26,7 @@ export class MetaformQuestionDisplayComponent {
         return this.question.label !== undefined && this.question.label !== null; 
     }
 
-    optionSelected(itemOption: MfOption) {
+    isSelected(itemOption: MfOption) {
         return this.formGroup.controls[this.question.key].value == itemOption.code;
     }
     
@@ -44,7 +45,6 @@ export class MetaformQuestionDisplayComponent {
     }
 
     onTextChange(event) {
-        console.debug(`newValue: ${event.target.value}`);
         this.updateValue(this.question.key, event.target.value );
     }
 
