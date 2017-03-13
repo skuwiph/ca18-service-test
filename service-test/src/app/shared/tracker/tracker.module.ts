@@ -4,9 +4,14 @@ import { CommonModule } from '@angular/common';
 // NgBootstrap
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
+
+import { routing } from './tracker.routing';
+
 // Import feature components, services and filters here
 import { TrackerButtonComponent } from './tracker-button.component';
 import { TrackerProgressComponent } from './tracker-progress.component';
+import { IntroStepComponent } from './intro-step.component';
+import { RewardStepComponent } from './reward-step.component';
 
 import { TrackerService } from './tracker.service';
 
@@ -15,11 +20,14 @@ import { TrackerService } from './tracker.service';
     imports: [
         NgbModule,
         CommonModule,
+        routing
     ],
     // Outputs
     declarations: [
         TrackerButtonComponent,
         TrackerProgressComponent,
+        IntroStepComponent,
+        RewardStepComponent
     ],
     // Services
     providers: [
@@ -29,6 +37,8 @@ import { TrackerService } from './tracker.service';
     exports: [
         TrackerButtonComponent,
         TrackerProgressComponent,
+        IntroStepComponent,
+        RewardStepComponent
     ]
 })
 export class TrackerModule {

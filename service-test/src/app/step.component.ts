@@ -39,10 +39,6 @@ export class StepComponent implements OnInit, OnDestroy, ITrackedProcess {
     processCurrentStep(): number {
         return 1;
     }
-
-    processComplete(): boolean {
-        return true;
-    }
     
     enableNext(): boolean { return true; }
     enablePrevious(): boolean { return true; }

@@ -18,20 +18,24 @@ export interface ITrackedProcess {
     processTotalSteps(): number;
     processCurrentStep(): number;
 
-    processComplete(): boolean;
-
     getBusinessRuleDataForTracker() : IBusinessRuleData;
     getActiveRoute(): ActivatedRoute;
     getRouter() : Router;
 
     enableNext(): boolean;
     enablePrevious(): boolean;
+
+    // // NOTE(ian): We could have:
+    // displayIntro(): void;
+    // displayRewardPage(): void;
+    // displayContent(): void;
 }
 
 @Injectable()
 export class TrackerService implements ITrackedProcess {
 
     constructor(
+        private router: Router,
         private http: Http,
         private applicationService: ApplicationService,
         private ruleService: BusinessRuleService,
@@ -57,10 +61,6 @@ export class TrackerService implements ITrackedProcess {
 
     processCurrentStep(): number {
         return 1;
-    }
-
-    processComplete(): boolean {
-        return this.processCurrentStep() == this.processTotalSteps();
     }
 
     enableNext(): boolean { return true; }
@@ -122,6 +122,7 @@ export class TrackerService implements ITrackedProcess {
     }
 
     navigateToNextStep( url : any,  router: Router, route: ActivatedRoute ) : void {
+        console.log(`navigating to ${url}`);
         router.navigateByUrl( url );
     }
 
@@ -173,9 +174,12 @@ export class TrackerService implements ITrackedProcess {
             if( s.id === this.currentSequence.id) {
                 // Got this one
                 if( lastSequence === null ) {
-                    this.navigateToNextStep( this.applicationSequence.homePageUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+                    console.log(`navigating to ${this.applicationSequence.homePageUrl}`);
+                    this.router.navigateByUrl( this.applicationSequence.homePageUrl );                    
+                    //this.navigateToNextStep( this.applicationSequence.homePageUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
                 } else {
-                    this.navigateToNextStep( lastSequence.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+                    //this.navigateToNextStep( lastSequence.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+                    this.router.navigateByUrl(  lastSequence.routerUrl );                    
                 }
             }
             lastSequence = s;
@@ -188,30 +192,42 @@ export class TrackerService implements ITrackedProcess {
 
         // Have we finished the current sequence?
         if( this.currentSequence !== undefined ) {
-            // console.log(`found current sequence, checking next available step from ${this.currentSequence.title}`);
-            // console.info(`Current/Total: ${this.trackedProcess.processCurrentStep()} == ${this.trackedProcess.processTotalSteps()}`);
+            console.log(`found current sequence, checking next available step from ${this.currentSequence.title}`);
+            console.info(`Current/Total: ${this.trackedProcess.processCurrentStep()} == ${this.trackedProcess.processTotalSteps()}`);
 
             // Is this sequence complete?
-            if( this.trackedProcess.processComplete() ) {
-                this.currentSequence.complete = true;
+            if( this.currentSequence.complete ) {
+                // TODO(ian): Send a 'sequence complete' message to the server?
+            } else {
+                // If we are beyond the final step, display the reward page
             }
         }
 
+        console.log("Finding first matching sequence");
+
         this.currentSequence = this.findFirstMatchingSequence(this.applicationService);
 
-        // // Start on current sequence
-        // for(let s of this.applicationSequence.sequence) {
-        //     if( !s.complete ) {
-        //         this.currentSequence = s;
-                this.currentSequence.currentStep = 0;
+        // By definition, if we're setting step to the zeroth item,
+        // if there is a sequence intro specified, we should be pointing at that..
 
-                // Navigate
-                this.navigateToNextStep( this.currentSequence.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+        // @question:
+        // Do we redirect to the intro (and eventually reward) pages specifically?
+        // (I'd rather not have each component have to specify what to display for 
+        // intro/reward pages themselves as it's something implementors would overlook.
 
-        //         // Early exit!
-        //         break;
-        //     }
-        // }
+        // But if we are going to attempt o display these pages ourselves, do I need to 
+        // set up routing?
+
+        if ( this.currentSequence.sequenceIntroPage ) {
+            console.log(`navigating to ${this.currentSequence.routerUrl}/intro`);
+            this.router.navigateByUrl( `${this.currentSequence.routerUrl}/intro` );                    
+            //this.navigateToNextStep( `${this.currentSequence.routerUrl}/intro`, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+        } else {
+            // TEMP
+            // Navigate
+            this.router.navigateByUrl( this.currentSequence.routerUrl );                    
+            this.navigateToNextStep( this.currentSequence.routerUrl, this.trackedProcess.getRouter(), this.trackedProcess.getActiveRoute() );
+        }
     }    
 
     // TODO(ian): @ugh

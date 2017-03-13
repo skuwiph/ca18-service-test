@@ -78,21 +78,6 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         return true; 
     }
 
-    processComplete(): boolean {
-        let result = this.formService.isValid(this.form, this.applicationService);
-        let isValid = result[0];
-        let errorList = result[1];
-
-        console.log(`Metaform: isValid ${isValid}`);
-        if( !isValid ) {
-            errorList.forEach(s => {
-                console.error(s);
-            });
-        }
-
-        return isValid && this.processCurrentStep() == this.processTotalSteps();
-    }
-
     processCurrentStep(): number {
         if( this.atEnd ) {
             return this.processTotalSteps();
@@ -156,6 +141,16 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         }
 
         this.pageIsValid = this.isPageValid();
+
+        if( this.atEnd )        {
+            console.log("At end, checking complete for tracker");
+            let result = this.formService.isValid(this.form, this.applicationService);
+            let isValid = result[0];
+            if( isValid ) {
+                this.trackerService.currentSequence.complete = true;
+            }
+
+        }
         //this.payLoad = JSON.stringify(this.form);
     }
 
