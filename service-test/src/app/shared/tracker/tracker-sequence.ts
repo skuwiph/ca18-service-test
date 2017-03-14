@@ -24,7 +24,6 @@ export class TrackerSequence {
     title: string;
     ruleToMatch?: string; 
     type: TrackerSequenceType;
-    // steps: SequenceStep[];
 
     sequenceIntroPage: string;
     sequenceOutroPage: string;
@@ -49,6 +48,7 @@ export class TrackerSequence {
         this.routerUrl = url;
     }
 
+    steps?: SequencePage[] = [];
 }
 
 export class SequencePage {

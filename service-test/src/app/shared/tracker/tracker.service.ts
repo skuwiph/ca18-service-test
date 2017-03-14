@@ -199,14 +199,30 @@ export class TrackerService implements ITrackedProcess {
             if( this.currentSequence.complete ) {
                 // TODO(ian): Send a 'sequence complete' message to the server?
             } else {
+                // Increase the current step
+                this.currentSequence.currentStep++;
+                console.info(`Current Step: ${this.currentSequence.currentStep}`);
                 // If we are beyond the final step, display the reward page
+                if( this.currentSequence.currentStep > this.processCurrentStep() ) {
+                    console.log(`at step: ${this.currentSequence.currentStep}, moving to reward`);
+                    
+                    this.router.navigateByUrl( `${this.currentSequence.routerUrl}/reward` );                    
+                } else {
+                    console.log(`navigating to next step`);
+                    this.router.navigateByUrl( this.currentSequence.routerUrl );                    
+                }
             }
+        } else {
+
+
+            
         }
 
         console.log("Finding first matching sequence");
 
         this.currentSequence = this.findFirstMatchingSequence(this.applicationService);
-
+        this.currentSequence.currentStep = 0;
+        
         // By definition, if we're setting step to the zeroth item,
         // if there is a sequence intro specified, we should be pointing at that..
 
