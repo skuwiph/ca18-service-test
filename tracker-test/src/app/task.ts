@@ -12,6 +12,20 @@ export class Task {
     }
 
     public newlyAssigned: boolean;
+
+    constructor(options: {
+            id?: number,
+            name?: string
+        } = {}
+    ) {
+        this.id = options.id;
+        this.name = options.name;
+        // Optionals
+//        this.label = options.label || '';
+    }
+
+    id: number;
+    name: string;
 }
 
 

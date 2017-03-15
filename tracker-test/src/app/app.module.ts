@@ -5,16 +5,24 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 
+import { TrackerService } from './tracker.service';
+import { TrackerButtonComponent } from './tracker-button.component';
+
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
+    declarations: [
+    AppComponent,
+    TrackerButtonComponent
+],
+imports: [
     BrowserModule,
     FormsModule,
     HttpModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
+],
+providers: [ TrackerService ],
+bootstrap: [ AppComponent ]
 })
-export class AppModule { }
+export class AppModule {
+    constructor(private tracker: TrackerService ) {
+        this.tracker.initialise();
+    }
+ }
