@@ -7,7 +7,7 @@ import 'rxjs/add/operator/switchMap';
 
 import { ApplicationService } from '../application/application.service';
 import { IBusinessRuleData } from '../rule/business-rule';
-import { TrackerService, ITrackedProcess } from '../tracker/tracker.service';
+import { TrackerService } from '../tracker/tracker.service';
 
 import { MetaformService } from './metaform.service';
 import { Metaform, MetaformSection, MfQuestion, MfValueChangeEvent } from './metaform';
@@ -22,7 +22,7 @@ import { WindowSize } from '../framework/window-size';
     styleUrls: ['./metaform-display.component.css']
 })
 
-export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProcess {
+export class MetaformDisplayComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -33,15 +33,15 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     ) {}
 
     ngOnInit() {
-        this.trackerService.addProcessHost(this);
+        // this.trackerService.addProcessHost(this);
 
         this.windowSize.width$.subscribe( x => { this.isMobile = (window.innerWidth <= 800); });
 
         this.formName = this.route.snapshot.params['formName'];
         this.form = this.formService.loadForm(this.formName);
 
-        let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
-        this.title = step.title;
+        // let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
+        // this.title = step.title;
 
         this.firstDisplayed = 0;
         this.currentQuestion = -1;
@@ -50,7 +50,7 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
         // was when they last quit out of the system
         this.atStart = true;
         this.atEnd = false;
-        step.currentStep = 0;
+        // step.currentStep = 0;
 
         if( !this.atStart && !this.atEnd) {
             this.displayQuestions();        
@@ -58,68 +58,68 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
     }
 
     ngOnDestroy() : void {
-        this.trackerService.removeProcessHost(this);
+        // this.trackerService.removeProcessHost(this);
     }
 
-    processTotalSteps(): number {
-        return this.form.totalQuestionCount + 1;
-    }
+    // processTotalSteps(): number {
+    //     return this.form.totalQuestionCount + 1;
+    // }
 
-    enableNext(): boolean {
-        if( this.atEnd || this.atStart )
-            return true;
+    // enableNext(): boolean {
+    //     if( this.atEnd || this.atStart )
+    //         return true;
 
-        // Need to check all items! 
-        return this.isPageValid();
-    }
+    //     // Need to check all items! 
+    //     return this.isPageValid();
+    // }
 
-    enablePrevious(): boolean {
-        // Probably should ALWAYS be true?
-        return true; 
-    }
+    // enablePrevious(): boolean {
+    //     // Probably should ALWAYS be true?
+    //     return true; 
+    // }
 
-    processCurrentStep(): number {
-        if( this.atEnd ) {
-            return this.processTotalSteps();
-        } else if ( this.atStart ) {
-            return 0;
-        } else {
-            return this.currentQuestion + 1;
-        }
-    }
+    // processCurrentStep(): number {
+    //     if( this.atEnd ) {
+    //         return this.processTotalSteps();
+    //     } else if ( this.atStart ) {
+    //         return 0;
+    //     } else {
+    //         return this.currentQuestion + 1;
+    //     }
+    // }
 
-    handleNavigateNext(): boolean {
-        this.atStart = false;
+    // handleNavigateNext(): boolean {
+    //     this.atStart = false;
 
-        // Get next question
-        if( !this.atEnd ) {
-            this.displayQuestions();
-        } else {
-            return false;
-        }
+    //     // Get next question
+    //     if( !this.atEnd ) {
+    //         this.displayQuestions();
+    //     } else {
+    //         return false;
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
-    handleNavigatePrevious(): boolean {
+    // handleNavigatePrevious(): boolean {
 
-        if( !this.atStart ) {
-            console.log(`Not at start`);
-            this.displayQuestions(false);
-        } else {
-            console.log(`At start`);
-            return false;
-        }
+    //     if( !this.atStart ) {
+    //         console.log(`Not at start`);
+    //         this.displayQuestions(false);
+    //     } else {
+    //         console.log(`At start`);
+    //         return false;
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
     
-    getBusinessRuleDataForTracker() : IBusinessRuleData {
-        return this.applicationService;
-    }
+    // getBusinessRuleDataForTracker() : IBusinessRuleData {
+    //     return this.applicationService;
+    // }
 
-    getActiveRoute(): ActivatedRoute { return this.route; }
-    getRouter() : Router { return this.router; }
+    // getActiveRoute(): ActivatedRoute { return this.route; }
+    // getRouter() : Router { return this.router; }
 
     private displayQuestions( forward = true ) {
         // TODO(ian): override display type 
@@ -147,7 +147,7 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy, ITrackedProc
             let result = this.formService.isValid(this.form, this.applicationService);
             let isValid = result[0];
             if( isValid ) {
-                this.trackerService.currentSequence.complete = true;
+                // this.trackerService.currentSequence.complete = true;
             }
 
         }

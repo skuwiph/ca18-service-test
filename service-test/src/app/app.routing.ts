@@ -8,6 +8,7 @@ const routes: Routes  = [
     { path: '', redirectTo: 'step', pathMatch: 'full'},    
     { path: 'step', component: StepComponent },
     { path: 'form', loadChildren: './shared/metaform/metaform.module#MetaformModule' },
+    { path: 'application', loadChildren: './application/application.module#ApplicationModule' }
 ];
 
 export const routing: ModuleWithProviders = RouterModule.forRoot(routes);

@@ -9,23 +9,38 @@ import { TrackerService } from './tracker.service';
 })
 export class TrackerButtonComponent implements OnInit {
     
-    constructor( private trackerService: TrackerService ) {} 
+    constructor( private tracker: TrackerService ) {} 
 
     ngOnInit() : void {
+        console.info(`In TrackerButtonComponent`);
+        console.debug(`Reading tracker applicationTasks`);
+
+
+        if( this.tracker.applicationTasks ) {
+            if( this.tracker.applicationTasks.activeTask ) {
+                this.currentTaskName = this.tracker.applicationTasks.activeTask.name;
+            } else {
+                this.currentTaskName = `No active task. Next will be ${this.tracker.applicationTasks.nextTaskInQueue.name}`;
+            }   
+        } else {
+            this.currentTaskName = 'No application tasks!';
+        }
     }
 
     previousButton() : void {
         console.log("TrackerButton::Previous...");
 
-        this.trackerService.previous();
+        //this.trackerService.
     }
 
     nextButton() : void {
         console.log("TrackerButton::Next...");
 
-        this.trackerService.next();
+        this.tracker.next();
     }
     
-    nextDisabled(): boolean { return !this.trackerService.enableNextButton(); }
-    previousDisabled(): boolean { return !this.trackerService.enablePreviousButton(); }
+    enablePrevious(): boolean  { return false; }
+    enableNext(): boolean { return true; }
+    
+    currentTaskName: string = '';
 }

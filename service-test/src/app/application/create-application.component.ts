@@ -1,15 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
-import { TrackerService } from './shared/tracker/tracker.service';
-import { ApplicationService } from './shared/application/application.service';
-import { IBusinessRuleData } from './shared/rule/business-rule';
+import { TrackerService } from '../shared/tracker/tracker.service';
+import { ApplicationService } from '../shared/application/application.service';
+import { IBusinessRuleData } from '../shared/rule/business-rule';
 
 @Component({
-    templateUrl: './step.component.html',
-    styleUrls: ['./step.component.css']
+    templateUrl: './create-application.component.html'
 })
-export class StepComponent implements OnInit, OnDestroy {
+export class CreateApplicationComponent implements OnInit, OnDestroy {
     
     constructor(
         private route: ActivatedRoute,
@@ -21,7 +20,7 @@ export class StepComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(){
-        console.log(`Step:Init`);
+        console.log(`CreateApplicationComponent:Init`);
     }
 
     ngOnDestroy() {

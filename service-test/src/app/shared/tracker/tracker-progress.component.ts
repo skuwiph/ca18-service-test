@@ -9,7 +9,7 @@ import { TrackerService } from './tracker.service';
     templateUrl: './tracker-progress.component.html'
 })
 export class TrackerProgressComponent implements OnInit {
-    percentComplete(): number { return this.trackerService.progressPercent; }
+    percentComplete(): number { return 50; }
 
     constructor( private trackerService: TrackerService) {} 
 

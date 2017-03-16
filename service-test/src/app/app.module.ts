@@ -25,8 +25,8 @@ import { MetaformService } from './shared/metaform/metaform.service';
         FormsModule,
         HttpModule,
         NgbModule.forRoot(),
-        TrackerModule,
-        routing
+        TrackerModule.forRoot(),
+        routing,
     ],
     declarations: [
         AppComponent,
@@ -35,11 +35,15 @@ import { MetaformService } from './shared/metaform/metaform.service';
     providers: [ 
         HttpModule,
         WindowSize,
-        BusinessRuleService,
         ApplicationService,
         TrackerService,
+        BusinessRuleService,
         MetaformService
     ],
     bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+    constructor(private tracker: TrackerService ) {
+        this.tracker.initialise();
+    }    
+}
