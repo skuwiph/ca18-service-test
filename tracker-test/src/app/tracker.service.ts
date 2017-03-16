@@ -72,6 +72,7 @@ export class TrackerService implements ITaskRouterProvider {
     ) { }
 
     navigateToTaskUrl( task: Task ): void {
+        console.info(`Navigate to ${task.routerUrl}`);
        // this.router.navigateByUrl( task.routerUrl, {} );
     }
 
