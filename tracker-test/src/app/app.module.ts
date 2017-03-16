@@ -16,7 +16,7 @@ import { TrackerButtonComponent } from './tracker-button.component';
 imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
 ],
 providers: [ TrackerService ],
 bootstrap: [ AppComponent ]

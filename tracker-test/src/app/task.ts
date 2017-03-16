@@ -15,17 +15,21 @@ export class Task {
 
     constructor(options: {
             id?: number,
-            name?: string
+            name?: string,
+            routerUrl?: string
         } = {}
     ) {
         this.id = options.id;
         this.name = options.name;
+        this.routerUrl = options.routerUrl;
+        
         // Optionals
 //        this.label = options.label || '';
     }
 
     id: number;
     name: string;
+    routerUrl: string;
 }
 
 

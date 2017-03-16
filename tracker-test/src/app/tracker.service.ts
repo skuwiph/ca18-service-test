@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { Http } from '@angular/http';
 
 import { ITaskProvider } from './task-provider';
+import { ITaskRouterProvider } from './task-router-provider';
 
 import { ApplicationTasks } from './application-tasks';
 import { Task } from './task';
 import { TaskStep } from './task-step';
 
 @Injectable()
-export class TrackerService {
+export class TrackerService implements ITaskRouterProvider {
     /**
      * Initialise. Call from application bootstrap
      */
@@ -54,16 +56,24 @@ export class TrackerService {
         if( !this.applicationTasks )
             throw new Error("No tasks loaded for the current application!");
 
-        if( !this.taskProvider )
-            throw new Error("No task status provider registered!");
+        // if( !this.taskProvider )
+        //     throw new Error("No task status provider registered!");
 
-        this.applicationTasks.getNextItem(this.taskProvider);
+        this.applicationTasks.getNextItem(this);
     }
 
 
     public applicationTasks: ApplicationTasks;
 
-    constructor( private http: Http ) { }
+    constructor( 
+        private http: Http
+        //, 
+        //private router: Router 
+    ) { }
+
+    navigateToTaskUrl( task: Task ): void {
+       // this.router.navigateByUrl( task.routerUrl, {} );
+    }
 
     /**
      * Call the tracker service to get tasks 
@@ -75,7 +85,7 @@ export class TrackerService {
         console.debug(`Loading tasks for all applications`);
 
         // Load tasks and override tasks from the service
-        t.tasks.push( new Task( { id: 1, name: "CreateApplication" } ) )
+        t.tasks.push( new Task( { id: 1, name: "CreateApplication", routerUrl: "/application/create" } ) )
         t.tasks.push( new Task( { id: 2, name: "PrepareForInterview" } ) )
         t.tasks.push( new Task( { id: 3, name: "SkillsFirstPass" } ) )
         t.tasks.push( new Task( { id: 4, name: "SelectInterviewer" } ) )

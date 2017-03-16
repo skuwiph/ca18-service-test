@@ -2,6 +2,7 @@ import { Task } from './task';
 import { TaskStep, TaskStepStatus } from './task-step';
 
 import { ITaskProvider } from './task-provider';
+import { ITaskRouterProvider } from './task-router-provider';
 
 export class ApplicationTasks {
 
@@ -17,30 +18,20 @@ export class ApplicationTasks {
     /** 
      * Get the next valid item for the user to attend to
      */
-    public getNextItem( provider: ITaskProvider ) { 
+    public getNextItem( routerProvider: ITaskRouterProvider ) { 
         // If there is no currentTask, we probably need one
         if( !this.currentTask ) {
-            console.debug(`No current task, finding the first`);
-            this.currentTask = this.getFirstMatchingTask();
+            console.debug(`No current task, finding the active task`);
+            //this.currentTask = this.getFirstMatchingTask();
+            this.currentTask = this.nextTaskInQueue;
             console.debug(`Got task '${this.currentTask.name}'`);
         }
 
-        console.debug(`The next step status for this task is ${provider.nextStepStatus( this.currentTask )}`);
+        // Do we have a current step?
 
-        // If there is a currentTask, where are we at?
-        // Do we move on to the next page, or have we finished
-        switch(provider.nextStepStatus( this.currentTask )) {
-            // Only possible if we've just got a matching task
-            case TaskStepStatus.Intro: 
-                break;
-            // We're still working through whatever process this is
-            case TaskStepStatus.Stepping:
-                break;
-            // We're about to finish -- our job is to redirect to the
-            // appropriate page
-            case TaskStepStatus.Outro:
-                break;
-        }
+
+        // redirect to the current task's url
+        routerProvider.navigateToTaskUrl(this.currentTask);
     }
 
     /**

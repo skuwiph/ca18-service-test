@@ -10,7 +10,7 @@ import { TaskStepStatus } from './task-step';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit, ITaskProvider {
+export class AppComponent implements OnInit { //, ITaskProvider {
     title = 'app works!';
 
     constructor(private tracker: TrackerService ) {}
@@ -22,14 +22,14 @@ export class AppComponent implements OnInit, ITaskProvider {
     nextEnabled(): boolean { return true;}
     previousEnabled(): boolean { return true;}
 
-    // NOTE(Ian): If currentTask.newlyAssigned then we have just started
-    // work on this task and must return TaskStepStatus.Intro...
-    nextStepStatus( currentTask: Task ): TaskStepStatus {
-        return TaskStepStatus.Intro;
-    }
+//     // NOTE(Ian): If currentTask.newlyAssigned then we have just started
+//     // work on this task and must return TaskStepStatus.Intro...
+//     nextStepStatus( currentTask: Task ): TaskStepStatus {
+//         return TaskStepStatus.Intro;
+//     }
 
-    // 
-    previousStepStatus( currentTask: Task ): TaskStepStatus {
-        return TaskStepStatus.Intro;
-    }
+//     // 
+//     previousStepStatus( currentTask: Task ): TaskStepStatus {
+//         return TaskStepStatus.Intro;
+//     }
 }
