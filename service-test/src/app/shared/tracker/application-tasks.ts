@@ -24,10 +24,23 @@ export class ApplicationTasks {
             console.debug(`No current task, finding the active task`);
             //this.currentTask = this.getFirstMatchingTask();
             this.currentTask = this.nextTaskInQueue;
+            this.currentTask.stepStatus = TaskStepStatus.Intro;
+
             console.debug(`Got task '${this.currentTask.name}'`);
+        } else {
+            // We have a currentTask, proceed to the next step
+            switch(this.currentTask.stepStatus)
+            {
+                case TaskStepStatus.Intro:
+                    this.currentTask.stepStatus = TaskStepStatus.Stepping;
+                    break;
+                case TaskStepStatus.Outro:
+                    this.currentTask.complete = true;
+                    this.getNextTask();
+                    break;
+            }
         }
 
-        // Do we have a current step?
 
 
         // redirect to the current task's url
@@ -49,7 +62,7 @@ export class ApplicationTasks {
             console.debug(`Got ${candidates.length} candidate tasks`);
 
             // Find the first valid item in the candidate array
-            t = candidates.find( t => t.isValid() );
+            t = candidates.find( t => t.isValid() && !t.complete );
             t.newlyAssigned = true;
         } else {
             throw new Error("No tasks to find a match for!");

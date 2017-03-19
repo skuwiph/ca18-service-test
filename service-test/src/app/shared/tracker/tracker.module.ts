@@ -29,10 +29,6 @@ import { TrackerService } from './tracker.service';
         // IntroStepComponent,
         // RewardStepComponent
     ],
-    // // Services
-    // providers: [
-    //     TrackerService        
-    // ],
     // Exports - if we export a component from here, we will probably import it into another module (either feature or root)
     exports: [
         TrackerButtonComponent,
@@ -42,10 +38,12 @@ import { TrackerService } from './tracker.service';
     ]
 })
 export class TrackerModule {
-  static forRoot(): ModuleWithProviders {
-    return {
-      ngModule: TrackerModule,
-      providers: [ TrackerService ]
-    };
-  }
+    // Stop reloading my damn service, thanks, Angular...
+    // http://stackoverflow.com/a/39873775
+    static forRoot(): ModuleWithProviders {
+        return {
+        ngModule: TrackerModule,
+        providers: [ TrackerService ]
+        };
+    }
 }

@@ -1,4 +1,4 @@
-import { TaskStep } from './task-step';
+import { TaskStep, TaskStepStatus } from './task-step';
 
 export class Task {
     // We do not know how many steps each task may have;
@@ -30,6 +30,8 @@ export class Task {
     id: number;
     name: string;
     routerUrl: string;
+    stepStatus: TaskStepStatus;
+    complete: boolean;
 }
 
 

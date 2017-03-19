@@ -56,9 +56,6 @@ export class TrackerService implements ITaskRouterProvider {
         if( !this.applicationTasks )
             throw new Error("No tasks loaded for the current application!");
 
-        // if( !this.taskProvider )
-        //     throw new Error("No task status provider registered!");
-
         this.applicationTasks.getNextItem(this);
 
         return false;
@@ -74,6 +71,10 @@ export class TrackerService implements ITaskRouterProvider {
         console.debug("TrackerService::ctor");
      }
 
+    /**
+     * Navigate to the desired task's URL
+     * @param task (Task) - the task to navigate to
+     */
     navigateToTaskUrl( task: Task ): boolean {
         console.info(`Navigate to ${task.routerUrl}`);
         setTimeout(() => {
@@ -83,7 +84,11 @@ export class TrackerService implements ITaskRouterProvider {
     }
 
     /**
-     * Call the tracker service to get tasks 
+     * Call the tracker service to get tasks.
+     * 
+     * NOTE: the service should either return the tasks by priority, or
+     * we should use extra information about the current application
+     * in order to determine which item takes precedent...
      * @param id (number) - application id
      */ 
     private getTasks() : ApplicationTasks {
