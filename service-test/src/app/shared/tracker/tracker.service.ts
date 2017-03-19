@@ -96,8 +96,9 @@ export class TrackerService implements ITaskRouterProvider {
 
         console.debug(`Loading tasks for all applications`);
 
+
         // Load tasks and override tasks from the service
-        t.tasks.push( new Task( { id: 1, name: "CreateApplication", routerUrl: "application/create" } ) )
+        t.tasks.push( new Task( { id: 1, name: "CreateApplication", routerUrl: "application/create", totalSteps: 4 } ) )
         t.tasks.push( new Task( { id: 2, name: "PrepareForInterview" } ) )
         t.tasks.push( new Task( { id: 3, name: "SkillsFirstPass" } ) )
         t.tasks.push( new Task( { id: 4, name: "SelectInterviewer" } ) )

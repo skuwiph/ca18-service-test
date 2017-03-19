@@ -1,5 +1,4 @@
-import { Task } from './task';
-import { TaskStep, TaskStepStatus } from './task-step';
+import { Task, TaskStatus } from './task';
 
 import { ITaskProvider } from './task-provider';
 import { ITaskRouterProvider } from './task-router-provider';
@@ -24,17 +23,20 @@ export class ApplicationTasks {
             console.debug(`No current task, finding the active task`);
             //this.currentTask = this.getFirstMatchingTask();
             this.currentTask = this.nextTaskInQueue;
-            this.currentTask.stepStatus = TaskStepStatus.Intro;
+            this.currentTask.taskStatus = TaskStatus.Intro;
 
             console.debug(`Got task '${this.currentTask.name}'`);
         } else {
             // We have a currentTask, proceed to the next step
-            switch(this.currentTask.stepStatus)
+            switch(this.currentTask.taskStatus)
             {
-                case TaskStepStatus.Intro:
-                    this.currentTask.stepStatus = TaskStepStatus.Stepping;
+                case TaskStatus.Intro:
+                    this.currentTask.taskStatus = TaskStatus.Stepping;
                     break;
-                case TaskStepStatus.Outro:
+                case TaskStatus.Stepping:
+                    
+                    break;
+                case TaskStatus.Outro:
                     this.currentTask.complete = true;
                     this.getNextTask();
                     break;

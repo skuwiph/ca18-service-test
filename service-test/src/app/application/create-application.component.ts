@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, UrlSegment } from '@angular/router';
+
+import { Observable } from 'rxjs/Observable';
 
 import { TrackerService } from '../shared/tracker/tracker.service';
 import { ApplicationService } from '../shared/application/application.service';
@@ -20,7 +22,11 @@ export class CreateApplicationComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(){
+        var url =this.route.snapshot.url.join('');
+        console.info(`Route: ${url}`);
+
         console.log(`CreateApplicationComponent:Init`);
+        //console.info(`Tracker for route '${parts}' step status is: ${this.tracker.applicationTasks.activeTask.taskStatus}`);
     }
 
     ngOnDestroy() {
