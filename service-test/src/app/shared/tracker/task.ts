@@ -1,3 +1,5 @@
+import { Sequence } from './sequence';
+
 export class Task {
     // We do not know how many steps each task may have;
     // that's the purview of the specific tasks themselves --
@@ -5,29 +7,38 @@ export class Task {
     // depending on display type, while a process like record skills
     // may have multiple steps, dependent on how many skills the applicant
     // adds
-    isValid() : boolean { 
+
+
+    public validForRules(): boolean {
         return true;
     }
 
-    public newlyAssigned: boolean;
     public setComplete() : void {
         this.taskStatus = TaskStatus.Complete;
     }
 
     constructor(options: {
+            sequence?: Sequence,
             id?: number,
             name?: string,
+            title?: string,
             routerUrl?: string,
+            routes?: string[],
             totalSteps?: number,
             introTemplate?: TaskIntroTemplate,
             outroTemplate?: TaskOutroTemplate,
             complete?: boolean
         } = {}
     ) {
+        this.sequence = options.sequence;
+
         this.id = options.id;
         this.name = options.name;
+        this.title = options.title;
         this.routerUrl = options.routerUrl;
+        
         // Optionals
+        this.routes = options.routes || [];
         this.totalSteps = options.totalSteps || 1;
         this.introTemplate = options.introTemplate || TaskIntroTemplate.None;
         this.outroTemplate = options.outroTemplate || TaskOutroTemplate.None;
@@ -35,16 +46,25 @@ export class Task {
 
         // Ensure status is up to date with complete flag
         if( this.complete ) this.taskStatus = TaskStatus.Complete;
+
+        this.currentStep = 0;
     }
 
     id: number;
     name: string;
+    title: string;
     routerUrl: string;
     totalSteps: number;
     taskStatus: TaskStatus;
     introTemplate: TaskIntroTemplate;
     outroTemplate: TaskOutroTemplate;
     complete: boolean;
+    currentStep: number;
+
+    routes: string[];
+
+    sequence: Sequence;
+    isValid: boolean;
 }
 
 export enum TaskIntroTemplate {

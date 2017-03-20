@@ -6,18 +6,19 @@ import { ITaskProvider } from './task-provider';
 import { ITaskRouterProvider } from './task-router-provider';
 
 import { ApplicationTasks } from './application-tasks';
+
+import { Sequence } from './sequence';
 import { Task, TaskIntroTemplate, TaskOutroTemplate, TaskStatus } from './task';
+import { TaskIntro } from './task-intro';
+import { TaskOutro } from './task-outro';
 
 @Injectable()
 export class TrackerService implements ITaskRouterProvider {
     /**
      * Initialise. Call from application bootstrap
      */
-    public initialise() : Task {
-        console.debug(`Getting First Task`);
-
+    public initialise(): void {
         this.applicationTasks = this.getTasks();
-
         if( !this.applicationTasks )
             throw new Error("No tasks loaded for the current application!");
 
@@ -27,7 +28,13 @@ export class TrackerService implements ITaskRouterProvider {
         // is called, this will become the task to route to.
         this.applicationTasks.getNextTask();
 
-        return this.applicationTasks.nextTaskInQueue;
+        // // If we have a page already, we probably want to set that to the
+        // // active task
+        // console.info( `We are initialising here: ${window.location.pathname}`);
+
+        // this.applicationTasks.activeTask = this.taskByPathName(window.location.pathname);
+
+        // console.info( `Active task by path is: ${this.applicationTasks.activeTask.name}`);
     }
 
     /**
@@ -49,36 +56,145 @@ export class TrackerService implements ITaskRouterProvider {
     }
 
     /**
+     * Get the current process complete percentage
+     */
+    public currentProcessCompletePercent(): number {
+        let p: number = 0;
+
+        if( this.taskProvider ) {
+            p = this.taskProvider.currentProcessCompletePercent();
+        } else {
+            if( this.applicationTasks && this.applicationTasks.activeTask ) {
+                let t = this.applicationTasks.activeTask;
+
+                let total: number;
+                let step: number = 1;
+                let stepModifier: number = 0;
+                if( t.introTemplate !== TaskIntroTemplate.None ) stepModifier++;
+                if( t.outroTemplate !== TaskOutroTemplate.None ) stepModifier++;
+
+                total = t.totalSteps + stepModifier;
+
+                if( t.taskStatus == TaskStatus.Intro ) step = 1;
+                else if( t.taskStatus == TaskStatus.Outro || t.taskStatus == TaskStatus.Complete ) step = total;
+                else {
+                    step = t.currentStep + 1;
+                }
+
+                p = step / total * 100;
+                console.info(`Percent: ${p}, from ${t.currentStep} or ${step} and ${t.totalSteps} with modifier ${stepModifier}`);
+            }
+        }
+
+        return p;
+    }
+
+    public get canStepPrevious(): boolean {
+
+        if( this.taskProvider ) return this.taskProvider.previousEnabled();
+
+        if( this.applicationTasks.activeTask ) {
+            switch( this.applicationTasks.activeTask.taskStatus ) {
+                case TaskStatus.Intro:
+                    return false;
+                case TaskStatus.Outro:
+                    return true;
+                case TaskStatus.Stepping:
+                    if ( this.applicationTasks.activeTask.introTemplate != TaskIntroTemplate.None )
+                        return true;
+            }
+        }
+
+        return false;
+    }
+
+    public get canStepNext(): boolean {
+        if( this.taskProvider ) return this.taskProvider.nextEnabled();
+
+        if( this.applicationTasks.activeTask ) {
+            switch( this.applicationTasks.activeTask.taskStatus ) {
+                case TaskStatus.Intro:
+                    return true;
+                case TaskStatus.Outro:
+                    return true;
+                case TaskStatus.Stepping:
+                    return this.applicationTasks.activeTask.isValid;
+            }            
+        }
+
+        return true;
+    }
+
+    /**
      * Step to the next step in the sequence
      */
-    public next() : boolean {
-        if( !this.applicationTasks )
-            throw new Error("No tasks loaded for the current application!");
-
+    public next(): boolean {
         this.applicationTasks.getNextItem(this);
 
         return false;
     }
 
+    /** 
+     * Step to the previous step in the sequence
+     */
+    public previous(): boolean {
+        this.applicationTasks.getPreviousItem(this);
 
-    public applicationTasks: ApplicationTasks;
+        return false;
+    }
 
-    constructor( 
-        private http: Http, 
-        private router: Router 
-    ) {
-        console.debug("TrackerService::ctor");
-     }
+    /**
+     * Get the active task
+     */
+    public get activeTask(): Task {
+        if( !this.applicationTasks )
+            throw new Error("No tasks loaded for the current application!");
+
+        console.debug(`getting activeTask`);
+
+        return this.applicationTasks.activeTask;
+    }
 
     /**
      * Navigate to the desired task's URL
      * @param task (Task) - the task to navigate to
+     * @param currentDirection (number) - what to increment the step by if necessary
      */
-    public navigateToTaskUrl( task: Task ): boolean {
-        console.info(`Navigate to ${task.routerUrl}`);
-        setTimeout(() => {
-            this.router.navigate( [task.routerUrl], {} );
-        }, 0);
+    public navigateToTaskUrl( task: Task, currentDirection: number ): boolean {
+        let url : string;
+
+        switch( task.taskStatus ) {
+
+            case TaskStatus.Intro: 
+                switch( task.introTemplate ) {
+                    case TaskIntroTemplate.Default:
+                    default:
+                        task.currentStep = 0;
+                        url = `${task.routerUrl}/intro`;
+                        break;
+                }
+                break;
+            case TaskStatus.Stepping:
+                task.currentStep += currentDirection;
+                console.log(`Current Step is ${task.currentStep}`);
+                url = task.routerUrl;
+                if( task.routes.length > 0)
+                    url = task.routes[task.currentStep - 1];
+                break;
+            case TaskStatus.Outro: 
+                switch( task.outroTemplate ) {
+                    case TaskOutroTemplate.Default:
+                    default:
+                        task.currentStep = task.totalSteps + 1;
+                        url = `${task.routerUrl}/finished`;
+                        break;
+                }
+                break;
+        }
+
+        console.info(`Navigate to ${url}`);
+
+        this.router.navigate( [url], {} );
         return false;
     }
 
@@ -87,13 +203,39 @@ export class TrackerService implements ITaskRouterProvider {
      * @param pathName (string) - the path name (from window.location.pathname) to search for
      */
     public taskByPathName( pathName: string ) : Task {        
-        let t: Task = this.applicationTasks.tasks.find( t => t.routerUrl === pathName );
+        let t: Task = this.taskFromListByPathName( this.applicationTasks.tasks, pathName );
+
         if( !t && this.applicationTasks.overrideTasks ) {
-            t = this.applicationTasks.overrideTasks.find( t => t.routerUrl === pathName );
+            let t: Task = this.taskFromListByPathName( this.applicationTasks.overrideTasks, pathName );
         }
 
         return t;
     }
+
+    /**
+     * Find the task intro by task
+     * @param task (Task) - current task
+     */
+    public taskIntroByTask( task: Task ) : TaskIntro {
+        if(!this.taskIntros) {
+            this.taskIntros = this.getTaskIntros(this.applicationTasks);
+        }
+
+        return this.taskIntros.find(ti => ti.task == task);
+    }
+
+    /**
+     * Find the task outro by task
+     * @param task (Task) - current task
+     */
+    public taskOutroByTask( task: Task ) : TaskOutro {
+        if( !this.taskOutros ) {
+            this.taskOutros = this.getTaskOutros(this.applicationTasks);
+        }
+
+        return this.taskOutros.find(ti => ti.task == task);
+    }
+
 
     /**
      * Set the active task
@@ -104,6 +246,31 @@ export class TrackerService implements ITaskRouterProvider {
         if( this.applicationTasks.activeTask !== t ) {
             this.applicationTasks.activeTask = t;
         }
+    }
+
+    public applicationTasks: ApplicationTasks;
+
+    /**
+     * Constructor
+     * @param http (Http) - http service
+     * @param router (Router) - router service
+     */
+    constructor( 
+        private http: Http, 
+        private router: Router 
+    ) {
+        console.debug("TrackerService::ctor");
+     }
+
+    /**
+     * Load sequences
+     */
+    private getSequences(): Array<Sequence> {
+        let s = new Array<Sequence>();
+
+        s.push( new Sequence( { id: 1, name: 'PrepareForInterview', title: 'Prepare for Interview'} ) );
+
+        return s;
     }
 
     /**
@@ -117,17 +284,93 @@ export class TrackerService implements ITaskRouterProvider {
     private getTasks() : ApplicationTasks {
         let t = new ApplicationTasks();
 
-        console.debug(`Loading tasks for all applications`);
-
-
         // Load tasks and override tasks from the service
-        t.tasks.push( new Task( { id: 1, name: "CreateApplication", routerUrl: "/application/create", totalSteps: 4, introTemplate: TaskIntroTemplate.Default } ) )
-        t.tasks.push( new Task( { id: 2, name: "PrepareForInterview" } ) )
-        t.tasks.push( new Task( { id: 3, name: "SkillsFirstPass" } ) )
-        t.tasks.push( new Task( { id: 4, name: "SelectInterviewer" } ) )
-        t.tasks.push( new Task( { id: 5, name: "MoreInformation" } ) )
+        t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 1, name: "CreateApplication", title: "Create Application", 
+            routerUrl: "/application/create", 
+            routes: ["/application/create", "/application/create/step2"],
+            totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
+        t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 3, name: "SkillsFirstPass", title: "Your Skills", routerUrl: 'application/skills' } ) )
+        t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 4, name: "SelectInterviewer", title: "Select your Interviewer" } ) )
+        t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 5, name: "MoreInformation", title: "More Information" } ) )
 
         return t;
+    }
+
+    /**
+     * Get task introductory steps
+     * @param tasks (ApplicationTasks) - task list
+     */
+    private getTaskIntros( tasks: ApplicationTasks ) : Array<TaskIntro> {
+        let i: Array<TaskIntro> = new Array<TaskIntro>();
+        
+        console.info(`Loading task intros`);
+
+        let createApplicationTask = this.getTaskById(tasks, 1);
+
+        i.push( new TaskIntro( 
+            { 
+                task: this.getTaskById(tasks, 1), 
+                bodyText: 'Before your interview, we\'d like you to think about a few things... like which types of camp you\'d like to work on, which activities you\'d like to be involved in and other experiences which may be relevant!',
+                image: 'img/sequence/sign-1.png' 
+            }) );
+
+        return i;
+    }
+
+    /**
+     * Get task reward pages
+     * @param tasks (ApplicationTask) - task list
+     */
+    private getTaskOutros( tasks: ApplicationTasks ) : Array<TaskIntro> {
+        let i: Array<TaskOutro> = new Array<TaskOutro>();
+        
+        console.info(`Loading task outros`);
+
+        let createApplicationTask = this.getTaskById(tasks, 1);
+
+        i.push( new TaskOutro( 
+            { 
+                task: this.getTaskById(tasks, 1), 
+                bodyText: 'Congratulations on completing the create application task!',
+            }) );
+
+        return i;
+    }
+
+    /**
+     * Get a task based on browsers pathname
+     * @param tasks (Array of Tasks) - candidate tasks
+     * @param pathName (string) - url pathname segment
+     */
+    private taskFromListByPathName( tasks: Array<Task>, pathName: string ) : Task {
+        let t: Task = tasks.find( t => t.routerUrl === pathName );
+        if( !t ) {
+            // If may be we need to check the lower levels
+            for(let i=0;i<tasks.length; i++){
+                if( tasks[i].routes.length > 0) {
+                    for(let r=0;r<tasks[i].routes.length;r++){
+                        if(tasks[i].routes[r] === pathName) {
+                            t = tasks[i];
+                            return t;
+                        }
+                    }
+                }
+            }
+        }
+
+        return t;
+    }
+
+    /**
+     * Return a sequence by Id
+     * @param id (number) - sequence Id to find
+     */
+    private getSequenceById(id: number) {
+        if( !this.sequences ) {
+            this.sequences = this.getSequences();
+        }
+
+        return this.sequences.find( s => s.id === id );
     }
 
     /**
@@ -137,13 +380,17 @@ export class TrackerService implements ITaskRouterProvider {
      * @param id (number) - task Id to search for
      */
     private getTaskById(applicationTasks: ApplicationTasks, id: number): Task {
-        let t: Task = applicationTasks.tasks.find( t => t.id == id );
+        let t: Task = applicationTasks.tasks.find( t => t.id === id );
         if( !t ) {
-            t = applicationTasks.overrideTasks.find( t => t.id == id );
+            t = applicationTasks.overrideTasks.find( t => t.id === id );
         }
 
         return t;
     }
 
     private taskProvider: ITaskProvider;
+
+    private sequences: Array<Sequence>;
+    private taskIntros: Array<TaskIntro>;
+    private taskOutros: Array<TaskOutro>;
 }

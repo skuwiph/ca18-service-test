@@ -1,0 +1,17 @@
+<tracker-progress></tracker-progress>
+
+<h3>{{ sequenceTitle }}</h3>
+<div class ="content-wrapper">
+    <h4>{{ title }}</h4>
+    
+    <div class="question-block">
+        <div class="form-group">
+            <p class="introText">{{ bodyText }}</p>
+            <div class="introImage" *ngIf="imageUrl">
+                <img class="introImage" [src]="imageUrl">
+            </div>
+        </div>
+    </div>
+</div>
+
+<tracker-buttons></tracker-buttons>

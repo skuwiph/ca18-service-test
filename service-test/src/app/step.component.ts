@@ -16,14 +16,13 @@ export class StepComponent implements OnInit, OnDestroy {
         private router: Router,        
         private applicationService: ApplicationService,
         private tracker: TrackerService 
-    ) {
-        console.log("Got app and tracker service");
-    }
+    ) {}
 
     ngOnInit(){
-        console.log(`Step:Init`);
+        console.log(`Step:ngOnInit`);
     }
 
     ngOnDestroy() {
+        console.log(`Step:ngOnDestroy`);
     }
 }

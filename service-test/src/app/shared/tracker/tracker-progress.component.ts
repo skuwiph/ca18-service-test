@@ -9,9 +9,11 @@ import { TrackerService } from './tracker.service';
     templateUrl: './tracker-progress.component.html'
 })
 export class TrackerProgressComponent implements OnInit {
-    percentComplete(): number { return 50; }
+    percentComplete(): number {
+         return this.tracker.currentProcessCompletePercent(); 
+    }
 
-    constructor( private trackerService: TrackerService) {} 
+    constructor( private tracker: TrackerService) {} 
 
     ngOnInit() : void {
     }

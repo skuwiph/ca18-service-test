@@ -15,12 +15,15 @@ export class TrackerButtonComponent implements OnInit {
         console.info(`In TrackerButtonComponent`);
         console.debug(`Reading tracker applicationTasks`);
 
-
         if( this.tracker.applicationTasks ) {
-            if( this.tracker.applicationTasks.activeTask ) {
-                this.currentTaskName = this.tracker.applicationTasks.activeTask.name;
+            if( this.tracker.activeTask ) {
+                this.currentTaskName = this.tracker.activeTask.name;
             } else {
-                this.currentTaskName = `No active task. Next will be ${this.tracker.applicationTasks.nextTaskInQueue.name}`;
+                if( this.tracker.applicationTasks.nextTaskInQueue ) {
+                    this.currentTaskName = `No active task. Next will be ${this.tracker.applicationTasks.nextTaskInQueue.name}`;
+                } else {
+                    this.currentTaskName = `No active or next task!`;
+                }
             }   
         } else {
             this.currentTaskName = 'No application tasks!';
@@ -30,7 +33,7 @@ export class TrackerButtonComponent implements OnInit {
     previousButton() : void {
         console.log("TrackerButton::Previous...");
 
-        //this.trackerService.
+        this.tracker.previous();
     }
 
     nextButton() : void {
@@ -39,8 +42,8 @@ export class TrackerButtonComponent implements OnInit {
         this.tracker.next();
     }
     
-    enablePrevious(): boolean  { return false; }
-    enableNext(): boolean { return true; }
+    enablePrevious(): boolean  { return this.tracker.canStepPrevious; }
+    enableNext(): boolean { return this.tracker.canStepNext; }
     
     currentTaskName: string = '';
 }

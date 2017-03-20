@@ -1,6 +1,19 @@
 <tracker-progress></tracker-progress>
 
-<h4>Create Application Test</h4>
-<p>Create application page</p>
+<h3>{{ sequenceTitle }}</h3>
+<div class ="content-wrapper">
+    <h4>Getting you ready for Interview</h4>
+    <div class="question-block">
+        <div class="form-group">
+            <p>Create application page</p>
+            <form action="">
+                <label><input type="radio" value="Y" name="isvalid" (click)="validClick($event)" [(ngModel)]="validButton"> Set valid</label>
+                <br>
+                <label><input type="radio" value="N" name="isvalid" (click)="validClick($event)" [(ngModel)]="validButton"> Set invalid</label>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <tracker-buttons></tracker-buttons>

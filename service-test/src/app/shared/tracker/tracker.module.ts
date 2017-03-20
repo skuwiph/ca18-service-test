@@ -10,8 +10,8 @@ import { routing } from './tracker.routing';
 // Import feature components, services and filters here
 import { TrackerButtonComponent } from './tracker-button.component';
 import { TrackerProgressComponent } from './tracker-progress.component';
-// import { IntroStepComponent } from './intro-step.component';
-// import { RewardStepComponent } from './reward-step.component';
+import { TaskIntroComponent } from './task-intro.component';
+import { TaskOutroComponent } from './task-outro.component';
 
 import { TrackerService } from './tracker.service';
 
@@ -26,15 +26,13 @@ import { TrackerService } from './tracker.service';
     declarations: [
         TrackerButtonComponent,
         TrackerProgressComponent,
-        // IntroStepComponent,
-        // RewardStepComponent
+        TaskIntroComponent,
+        TaskOutroComponent
     ],
     // Exports - if we export a component from here, we will probably import it into another module (either feature or root)
     exports: [
         TrackerButtonComponent,
-        TrackerProgressComponent,
-        // IntroStepComponent,
-        // RewardStepComponent
+        TrackerProgressComponent
     ]
 })
 export class TrackerModule {

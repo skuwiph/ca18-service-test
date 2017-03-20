@@ -1,5 +1,5 @@
 import { Task } from './task';
 
 export interface ITaskRouterProvider {
-    navigateToTaskUrl( task: Task): void;
+    navigateToTaskUrl( task: Task, currentDirection: number ): boolean;
 }
