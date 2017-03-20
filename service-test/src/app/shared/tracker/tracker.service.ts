@@ -289,7 +289,9 @@ export class TrackerService implements ITaskRouterProvider {
             routerUrl: "/application/create", 
             routes: ["/application/create", "/application/create/step2"],
             totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
-        t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 3, name: "SkillsFirstPass", title: "Your Skills", routerUrl: 'application/skills' } ) )
+        t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 2, name: "FirstForm", title: "A form",
+            routerUrl: '/form/this-is-my-form',
+            totalSteps: 9, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 4, name: "SelectInterviewer", title: "Select your Interviewer" } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 5, name: "MoreInformation", title: "More Information" } ) )
 
@@ -305,8 +307,6 @@ export class TrackerService implements ITaskRouterProvider {
         
         console.info(`Loading task intros`);
 
-        let createApplicationTask = this.getTaskById(tasks, 1);
-
         i.push( new TaskIntro( 
             { 
                 task: this.getTaskById(tasks, 1), 
@@ -314,6 +314,12 @@ export class TrackerService implements ITaskRouterProvider {
                 image: 'img/sequence/sign-1.png' 
             }) );
 
+        i.push( new TaskIntro( 
+            { 
+                task: this.getTaskById(tasks, 2), 
+                bodyText: 'This is some text about going on to do some form work, to test out the metaform. Let\'s hope it works!',
+                image: 'img/sequence/database.png' 
+            }) );
         return i;
     }
 
@@ -332,6 +338,12 @@ export class TrackerService implements ITaskRouterProvider {
             { 
                 task: this.getTaskById(tasks, 1), 
                 bodyText: 'Congratulations on completing the create application task!',
+            }) );
+        i.push( new TaskOutro( 
+            { 
+                task: this.getTaskById(tasks, 2), 
+                bodyText: 'Congratulations on completing the metaform task!',
+                image: 'img/sequence/like.png'
             }) );
 
         return i;

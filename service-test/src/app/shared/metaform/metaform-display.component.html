@@ -1,6 +1,6 @@
 <tracker-progress></tracker-progress>
 <div class="content-wrapper">
-    <h3>{{ sequenceTitle }}</h3>
+    <h3>{{ title }}</h3>
     <!--<div *ngIf="!atStart && !atEnd" class="question-block">-->
     <div class="question-block">
         <div class="content-wrapper">
@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <form [formGroup]="formGroup">
+        <form *ngIf="formGroup" [formGroup]="formGroup">
             <div *ngFor="let question of questionsToDisplay">
 
                 <div class="question-block">

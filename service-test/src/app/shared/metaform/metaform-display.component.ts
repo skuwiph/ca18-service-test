@@ -8,6 +8,9 @@ import 'rxjs/add/operator/switchMap';
 import { ApplicationService } from '../application/application.service';
 import { IBusinessRuleData } from '../rule/business-rule';
 import { TrackerService } from '../tracker/tracker.service';
+import { TrackedTaskComponent } from '../tracker/tracked-task.component';
+import { ITaskProvider } from '../tracker/task-provider';
+import { Task } from '../tracker/task';
 
 import { MetaformService } from './metaform.service';
 import { Metaform, MetaformSection, MfQuestion, MfValueChangeEvent } from './metaform';
@@ -22,7 +25,7 @@ import { WindowSize } from '../framework/window-size';
     styleUrls: ['./metaform-display.component.css']
 })
 
-export class MetaformDisplayComponent implements OnInit, OnDestroy {
+export class MetaformDisplayComponent extends TrackedTaskComponent implements OnInit, OnDestroy, ITaskProvider {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -30,11 +33,29 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy {
         private applicationService: ApplicationService,
         private tracker: TrackerService,
         private formService: MetaformService
-    ) {console.info(`MetaformDisplayComponent`);}
+    ) {
+        super(router, tracker);
+        console.info(`MetaformDisplayComponent`);}
 
     ngOnInit() {
-        // this.trackerService.addProcessHost(this);
         console.info(`MetaformDisplayComponent::ngOnInit`);
+        super.ngOnInit();
+
+        this.tracker.registerTaskProvider(this);
+
+    }
+
+    ngOnDestroy() {
+        super.ngOnDestroy();
+        this.tracker.unregisterTaskProvider(this);
+    }
+
+    initialise(): void {
+        console.log(`CreateApplicationComponent:Init`);
+        var path = window.location.pathname;
+        console.info(`Route: ${path}`);
+        let t: Task = this.tracker.taskByPathName(path);
+        console.info(`Task is ${t.name}, Id = ${t.id}`);
 
         this.windowSize.width$.subscribe( x => { this.isMobile = (window.innerWidth <= 800); });
 
@@ -44,20 +65,37 @@ export class MetaformDisplayComponent implements OnInit, OnDestroy {
         // let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
         // this.title = step.title;
 
+
         this.firstDisplayed = 0;
         this.currentQuestion = -1;
+
+        this.tracker.setActiveTask(t);
+        this.tracker.activeTask.totalSteps = this.form.questions.length;
+        this.title = this.tracker.activeTask.sequence.title;
 
         this.displayQuestions();        
     }
 
-    ngOnDestroy() : void {
-        // this.trackerService.removeProcessHost(this);
+    nextEnabled(): boolean { return this.isPageValid(); }
+    previousEnabled(): boolean { return true; }
+    currentProcessCompletePercent(): number {
+        let p = 0;
+
+        console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
+
+        p = ( this.tracker.activeTask.currentStep + 1 ) / ( this.tracker.activeTask.totalSteps + 2 ) * 100;
+
+        return p;
     }
 
     private displayQuestions( forward = true ) {
         console.info(`displayQuestions`);
         // TODO(ian): override display type 
         this.isMobile = true;
+
+        // TODO(ian): Hrm
+        this.currentQuestion = this.tracker.activeTask.currentStep - 1;
+        console.info(`current question to display: ${this.currentQuestion}`);
 
         let result = this.formService.getNextQuestionBlock(this.form, this.applicationService, this.isMobile, this.currentQuestion, forward);
 
