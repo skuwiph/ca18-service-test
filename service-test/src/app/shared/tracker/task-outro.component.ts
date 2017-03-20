@@ -20,7 +20,7 @@ export class TaskOutroComponent extends TrackedTaskComponent implements OnInit, 
         private router: Router,
         private applicationService: ApplicationService,
         private tracker: TrackerService
-    ) { super(router, applicationService, tracker);}
+    ) { super(router, tracker);}
 
     ngOnInit() {
         super.ngOnInit();

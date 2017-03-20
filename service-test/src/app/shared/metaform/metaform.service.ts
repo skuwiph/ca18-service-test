@@ -153,6 +153,8 @@ export class MetaformService {
         let atStart = false;
         let atEnd = false;
 
+        console.info(`getNextQuestionBlock`);
+
         // We're on mobile, so we must check the rules ourselves and 
         // only return the one question 
         if( defaultDisplay ) {
@@ -237,6 +239,8 @@ export class MetaformService {
                 group[item.key] = new FormControl(item.value || '', this.validatorsForQuestion(item));
             });
 		});
+
+        console.info(`toFormGroup: ${group.length} items`);
 
 		return new FormGroup(group);
 	}
