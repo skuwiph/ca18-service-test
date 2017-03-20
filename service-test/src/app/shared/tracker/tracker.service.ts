@@ -6,8 +6,7 @@ import { ITaskProvider } from './task-provider';
 import { ITaskRouterProvider } from './task-router-provider';
 
 import { ApplicationTasks } from './application-tasks';
-import { Task } from './task';
-import { TaskStep } from './task-step';
+import { Task, TaskIntroTemplate, TaskOutroTemplate, TaskStatus } from './task';
 
 @Injectable()
 export class TrackerService implements ITaskRouterProvider {
@@ -75,12 +74,36 @@ export class TrackerService implements ITaskRouterProvider {
      * Navigate to the desired task's URL
      * @param task (Task) - the task to navigate to
      */
-    navigateToTaskUrl( task: Task ): boolean {
+    public navigateToTaskUrl( task: Task ): boolean {
         console.info(`Navigate to ${task.routerUrl}`);
         setTimeout(() => {
             this.router.navigate( [task.routerUrl], {} );
         }, 0);
         return false;
+    }
+
+    /**
+     * Get a task based on its routerUrl, from either of the candidate task pools.
+     * @param pathName (string) - the path name (from window.location.pathname) to search for
+     */
+    public taskByPathName( pathName: string ) : Task {        
+        let t: Task = this.applicationTasks.tasks.find( t => t.routerUrl === pathName );
+        if( !t && this.applicationTasks.overrideTasks ) {
+            t = this.applicationTasks.overrideTasks.find( t => t.routerUrl === pathName );
+        }
+
+        return t;
+    }
+
+    /**
+     * Set the active task
+     * @param t (Task) - the task to make active
+     */
+    public setActiveTask( t: Task ) {
+        console.log(`Setting active task to ${t.name}`);
+        if( this.applicationTasks.activeTask !== t ) {
+            this.applicationTasks.activeTask = t;
+        }
     }
 
     /**
@@ -98,7 +121,7 @@ export class TrackerService implements ITaskRouterProvider {
 
 
         // Load tasks and override tasks from the service
-        t.tasks.push( new Task( { id: 1, name: "CreateApplication", routerUrl: "application/create", totalSteps: 4 } ) )
+        t.tasks.push( new Task( { id: 1, name: "CreateApplication", routerUrl: "/application/create", totalSteps: 4, introTemplate: TaskIntroTemplate.Default } ) )
         t.tasks.push( new Task( { id: 2, name: "PrepareForInterview" } ) )
         t.tasks.push( new Task( { id: 3, name: "SkillsFirstPass" } ) )
         t.tasks.push( new Task( { id: 4, name: "SelectInterviewer" } ) )

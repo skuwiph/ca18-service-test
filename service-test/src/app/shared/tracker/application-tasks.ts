@@ -5,7 +5,8 @@ import { ITaskRouterProvider } from './task-router-provider';
 
 export class ApplicationTasks {
 
-    public get activeTask(): Task { return this.currentTask };
+    public get activeTask(): Task { return this.currentTask; }
+    public set activeTask( t: Task ) { this.currentTask = t; }
     
     public getNextTask() {
         let t: Task = this.getFirstMatchingTask();
@@ -42,8 +43,6 @@ export class ApplicationTasks {
                     break;
             }
         }
-
-
 
         // redirect to the current task's url
         routerProvider.navigateToTaskUrl(this.currentTask);
