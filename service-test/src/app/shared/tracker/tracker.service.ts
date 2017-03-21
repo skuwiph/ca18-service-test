@@ -159,8 +159,9 @@ export class TrackerService implements ITaskRouterProvider {
      * Navigate to the desired task's URL
      * @param task (Task) - the task to navigate to
      * @param currentDirection (number) - what to increment the step by if necessary
+     * @param lastStatus (TaskStatus) - the last status of this task prior to any movement
      */
-    public navigateToTaskUrl( task: Task, currentDirection: number ): boolean {
+    public navigateToTaskUrl( task: Task, currentDirection: number, lastStatus: TaskStatus ): boolean {
         let url : string;
 
         switch( task.taskStatus ) {
@@ -176,10 +177,26 @@ export class TrackerService implements ITaskRouterProvider {
                 break;
             case TaskStatus.Stepping:
                 task.currentStep += currentDirection;
-                console.log(`Current Step is ${task.currentStep}`);
+                // console.log(`Current Step is ${task.currentStep}`);
+
+                if( this.taskProvider )
+                    if( (currentDirection == ApplicationTasks.DIRECTION_FORWARDS && this.taskProvider.stepNext())
+                    ||  (currentDirection == ApplicationTasks.DIRECTION_BACKWARDS && this.taskProvider.stepPrevious())
+                     ) {
+                        // console.info(`Stepping handled by client process`);
+                        // early exit
+                        return;
+                    }
+
                 url = task.routerUrl;
-                if( task.routes.length > 0)
+                if( task.routes.length > 0) {
                     url = task.routes[task.currentStep - 1];
+                }
+
+                if (currentDirection == ApplicationTasks.DIRECTION_BACKWARDS && (lastStatus == TaskStatus.Outro || lastStatus == TaskStatus.Complete)) {
+                    console.info(`Going backwards from a finished page`);
+                    url += '&f=l';
+                }
                 break;
             case TaskStatus.Outro: 
                 switch( task.outroTemplate ) {

@@ -436,7 +436,7 @@ export class MetaformService {
             {
                 sectionId: 2,
                 caption: 'A last question from section #2',
-                name: 'fishColour',
+                name: 'options',
                 items: [
                     { 
                         controlType: 'optionselect', 
@@ -451,7 +451,7 @@ export class MetaformService {
                         ],
                     }
                 ]
-            }                    
+            }           
         ]
     };
 }

@@ -57,5 +57,8 @@ export class CreateApplicationStep2Component extends TrackedTaskComponent implem
         return p;
     }
 
+    stepNext(): boolean {return false;}
+    stepPrevious(): boolean {return false;}
+
     private sequenceTitle: string;
 }

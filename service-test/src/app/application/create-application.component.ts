@@ -59,6 +59,10 @@ export class CreateApplicationComponent extends TrackedTaskComponent implements 
         return p;
     }
 
+    stepNext(): boolean {return false;}
+    stepPrevious(): boolean {return false;}
+
+
     validClick($event) {
         console.debug(`Valid click! ${$event}`);
     }

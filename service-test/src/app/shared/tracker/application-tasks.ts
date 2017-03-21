@@ -16,6 +16,8 @@ export class ApplicationTasks {
      * Get the next valid item for the user to attend to
      */
     public getNextItem( routerProvider: ITaskRouterProvider ) { 
+        let lastStatus;
+
         // If there is no currentTask, we probably need one
         if( !this.currentTask ) {
             this.currentTask = this.nextTaskInQueue;
@@ -24,6 +26,7 @@ export class ApplicationTasks {
             console.debug(`Got task '${this.currentTask.name}' with status ${this.currentTask.taskStatus}`);
         } else {
             console.info(`Got current task ${this.currentTask.name} with status ${this.currentTask.taskStatus}`);
+            lastStatus = this.currentTask.taskStatus;
 
             // We have a currentTask, proceed to the next step
             switch(this.currentTask.taskStatus)
@@ -49,7 +52,7 @@ export class ApplicationTasks {
         }
 
         // redirect to the current task's url
-        routerProvider.navigateToTaskUrl(this.currentTask, ApplicationTasks.DIRECTION_FORWARDS);
+        routerProvider.navigateToTaskUrl(this.currentTask, ApplicationTasks.DIRECTION_FORWARDS, lastStatus);
     }
 
     /**
@@ -60,6 +63,8 @@ export class ApplicationTasks {
         if( !this.currentTask ) {
             return;
         }
+
+        let lastStatus = this.currentTask.taskStatus;
 
         switch(this.currentTask.taskStatus)
         {
@@ -78,7 +83,7 @@ export class ApplicationTasks {
         }
 
         // redirect to the current task's url
-        routerProvider.navigateToTaskUrl(this.currentTask, ApplicationTasks.DIRECTION_BACKWARDS);
+        routerProvider.navigateToTaskUrl(this.currentTask, ApplicationTasks.DIRECTION_BACKWARDS, lastStatus);
     }
 
     /**
@@ -141,8 +146,8 @@ export class ApplicationTasks {
 
     private currentTask: Task;
     
-    private static readonly DIRECTION_FORWARDS: number = +1;
-    private static readonly DIRECTION_BACKWARDS: number = -1;
+    public static readonly DIRECTION_FORWARDS: number = +1;
+    public static readonly DIRECTION_BACKWARDS: number = -1;
 
     //constructor( private id: number, private provider: ITaskProvider ) {}
     constructor() {}

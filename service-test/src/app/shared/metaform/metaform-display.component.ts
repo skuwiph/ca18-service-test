@@ -16,6 +16,7 @@ import { MetaformService } from './metaform.service';
 import { Metaform, MetaformSection, MfQuestion, MfValueChangeEvent } from './metaform';
 
 import { WindowSize } from '../framework/window-size';
+import { getUrlParameter } from '../framework/query-params';
 
 // https://angular.io/docs/ts/latest/cookbook/dynamic-form.html
 // TODO(ian): add the individual displays for each component question
@@ -51,23 +52,26 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
     }
 
     initialise(): void {
-        console.log(`CreateApplicationComponent:Init`);
-        var path = window.location.pathname;
-        console.info(`Route: ${path}`);
+        console.log(`MetaformDisplayComponent:Init`);
+        let path = window.location.pathname;
+        //let urlParams = new URLSearchParams(window.location.search);
+        //let overrideCurrentQuestion = urlParams.get('f') === 'l';
+        let overrideCurrentQuestion = getUrlParameter('f') === '1';
+        
+
         let t: Task = this.tracker.taskByPathName(path);
-        console.info(`Task is ${t.name}, Id = ${t.id}`);
 
         this.windowSize.width$.subscribe( x => { this.isMobile = (window.innerWidth <= 800); });
 
         this.formName = this.route.snapshot.params['formName'];
         this.form = this.formService.loadForm(this.formName);
 
-        // let step = this.trackerService.getTrackerSequenceForFormName(1, this.formName);
-        // this.title = step.title;
-
-
-        this.firstDisplayed = 0;
+        // this.firstDisplayed = 0;
         this.currentQuestion = -1;
+
+        if( overrideCurrentQuestion ){
+            this.currentQuestion = this.form.totalQuestionCount - 2;
+        }
 
         this.tracker.setActiveTask(t);
         this.tracker.activeTask.totalSteps = this.form.questions.length;
@@ -83,9 +87,21 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
 
         console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
 
-        p = ( this.tracker.activeTask.currentStep + 1 ) / ( this.tracker.activeTask.totalSteps + 2 ) * 100;
+        p = ( this.currentQuestion + 1 ) / ( this.form.totalQuestionCount + 2 ) * 100;
 
         return p;
+    }
+
+    stepNext(): boolean {
+        console.info(`Increment page display count`);
+        this.displayQuestions();
+        return true;
+    }
+
+    stepPrevious(): boolean {
+        console.info(`Decrement page display count`);
+        this.displayQuestions(false);
+        return true;
     }
 
     private displayQuestions( forward = true ) {
@@ -93,8 +109,8 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
         // TODO(ian): override display type 
         this.isMobile = true;
 
-        // TODO(ian): Hrm
-        this.currentQuestion = this.tracker.activeTask.currentStep - 1;
+        // // TODO(ian): Hrm
+        // //this.currentQuestion = this.tracker.activeTask.currentStep - 1;
         console.info(`current question to display: ${this.currentQuestion}`);
 
         let result = this.formService.getNextQuestionBlock(this.form, this.applicationService, this.isMobile, this.currentQuestion, forward);
@@ -159,7 +175,7 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
 
     currentSection: MetaformSection;
     questionsToDisplay: MfQuestion[];
-    firstDisplayed: number;
+    // firstDisplayed: number;
     currentQuestion: number;
     
     pageIsValid: boolean;

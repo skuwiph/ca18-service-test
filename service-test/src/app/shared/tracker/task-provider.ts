@@ -5,4 +5,14 @@ export interface ITaskProvider {
     previousEnabled(): boolean;
 
     currentProcessCompletePercent(): number;
+
+    /**
+     * If you are handling the stepping completely, return true, otherwise return false;
+     */
+    stepNext(): boolean;
+
+    /**
+     * If you are handling the stepping completely, return true, otherwise return false;
+     */
+    stepPrevious(): boolean;
 }
