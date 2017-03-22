@@ -53,43 +53,60 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
 
     initialise(): void {
         console.log(`MetaformDisplayComponent:Init`);
-        let path = window.location.pathname;
+        let path = decodeURIComponent(window.location.pathname);
+        let param = getUrlParameter('f');
+
         //let urlParams = new URLSearchParams(window.location.search);
         //let overrideCurrentQuestion = urlParams.get('f') === 'l';
-        let overrideCurrentQuestion = getUrlParameter('f') === '1';
+        console.log(`Parameter:'${param}'`);
+        let overrideCurrentQuestion = param === '1';
         
-
         let t: Task = this.tracker.taskByPathName(path);
+
+        console.assert( t, `Task is not defined by path ${path}`);
 
         this.windowSize.width$.subscribe( x => { this.isMobile = (window.innerWidth <= 800); });
 
         this.formName = this.route.snapshot.params['formName'];
         this.form = this.formService.loadForm(this.formName);
 
+        console.log(`1`);
+
         // this.firstDisplayed = 0;
         this.currentQuestion = -1;
 
         if( overrideCurrentQuestion ){
             this.currentQuestion = this.form.totalQuestionCount - 2;
+            console.info(`Overriding start question -- showing question ${this.currentQuestion} out of ${this.form.totalQuestionCount}`);
         }
 
+        console.log(`2`);
+
         this.tracker.setActiveTask(t);
-        this.tracker.activeTask.totalSteps = this.form.questions.length;
+
+        console.log(`3`);
+
+        this.tracker.activeTask.totalSteps = this.form.questions.length - 1;
+
+        console.log(`4`);
+
         this.title = this.tracker.activeTask.sequence.title;
 
+        console.log(`5`);
         this.displayQuestions();        
     }
 
     nextEnabled(): boolean { return this.isPageValid(); }
     previousEnabled(): boolean { return true; }
-    currentProcessCompletePercent(): number {
+    currentProcessCompletePercent(): [number, number, number] {
         let p = 0;
 
-        console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
+        //console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
 
-        p = ( this.currentQuestion + 1 ) / ( this.form.totalQuestionCount + 2 ) * 100;
+        p = ( this.currentQuestion + 1 ) / ( this.form.totalQuestionCount + 1) * 100;
+        console.debug(`Complete: ${p}%`);
 
-        return p;
+        return [p, this.currentQuestion + 1, this.form.totalQuestionCount + 1];
     }
 
     stepNext(): boolean {
@@ -120,25 +137,18 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
         // this.atStart = result[2];
         // this.atEnd = result[3];
 
-        console.info(`Current = ${this.currentQuestion}`);
-        console.info(`displayQuestions: result.questions: ${this.questionsToDisplay.length}`);
+        if( this.questionsToDisplay ) {
+            console.info(`Current = ${this.currentQuestion}`);
+            console.info(`displayQuestions: result.questions: ${this.questionsToDisplay.length}`);
 
-        this.formGroup = this.formService.toFormGroup( this.questionsToDisplay );
-        this.currentSection = this.formService.getSectionForQuestion( this.form, this.questionsToDisplay[0]);
-        this.subtitle = this.currentSection.title;
+            this.formGroup = this.formService.toFormGroup( this.questionsToDisplay );
+            this.currentSection = this.formService.getSectionForQuestion( this.form, this.questionsToDisplay[0]);
+            this.subtitle = this.currentSection.title;
 
-        this.pageIsValid = this.isPageValid();
-
-        // if( this.atEnd )        {
-        //     console.log("At end, checking complete for tracker");
-        //     let result = this.formService.isValid(this.form, this.applicationService);
-        //     let isValid = result[0];
-        //     if( isValid ) {
-        //         // this.trackerService.currentSequence.complete = true;
-        //     }
-
-        // }
-        //this.payLoad = JSON.stringify(this.form);
+            this.pageIsValid = this.isPageValid();
+        } else {
+            console.error(`questionToDisplay is farked`);
+        }
     }
 
     private isPageValid() : boolean {

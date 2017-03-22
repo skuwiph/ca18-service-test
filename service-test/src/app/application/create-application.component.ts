@@ -51,12 +51,12 @@ export class CreateApplicationComponent extends TrackedTaskComponent implements 
 
     nextEnabled(): boolean { if( this.validButton && this.validButton === 'Y' ) { return true; } else return false; }
     previousEnabled(): boolean { return true; }
-    currentProcessCompletePercent(): number {
+    currentProcessCompletePercent(): [number, number, number] {
         let p = 0;
 
         p = ( this.tracker.activeTask.currentStep + 1 ) / 4 * 100;
 
-        return p;
+        return [p, ( this.tracker.activeTask.currentStep + 1 ), 4];
     }
 
     stepNext(): boolean {return false;}

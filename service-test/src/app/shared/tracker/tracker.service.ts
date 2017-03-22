@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Http } from '@angular/http';
@@ -11,6 +12,26 @@ import { Sequence } from './sequence';
 import { Task, TaskIntroTemplate, TaskOutroTemplate, TaskStatus } from './task';
 import { TaskIntro } from './task-intro';
 import { TaskOutro } from './task-outro';
+
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+export class TrackerEvent {
+    activeTask: Task;
+    currentStep: number;
+    totalSteps: number;
+    percentComplete: number;
+
+    constructor( options: {
+        activeTask?: Task,
+        currentStep?: number,
+        totalSteps?: number,
+        percentComplete?: number
+     }) {
+         this.activeTask = options.activeTask;
+         this.currentStep = options.currentStep;
+         this.totalSteps = options.totalSteps;
+         this.percentComplete = options.percentComplete;
+     }
+}
 
 @Injectable()
 export class TrackerService implements ITaskRouterProvider {
@@ -31,10 +52,17 @@ export class TrackerService implements ITaskRouterProvider {
         // // If we have a page already, we probably want to set that to the
         // // active task
         // console.info( `We are initialising here: ${window.location.pathname}`);
+        // let t: Task = this.taskByPathName(window.location.pathname);
 
-        // this.applicationTasks.activeTask = this.taskByPathName(window.location.pathname);
+        // if( t ) {
+        //     this.applicationTasks.activeTask = t;
 
-        // console.info( `Active task by path is: ${this.applicationTasks.activeTask.name}`);
+        //     if( this.applicationTasks )
+        //         console.info( `Active task by path is: ${this.applicationTasks.activeTask.name}`);
+        // }
+
+        // For safety during development, let's force a redirect to homepage
+        this.router.navigateByUrl('/home');
     }
 
     /**
@@ -58,35 +86,38 @@ export class TrackerService implements ITaskRouterProvider {
     /**
      * Get the current process complete percentage
      */
-    public currentProcessCompletePercent(): number {
+    public calculateCurrentProgress(): void {
         let p: number = 0;
 
         if( this.taskProvider ) {
-            p = this.taskProvider.currentProcessCompletePercent();
+            let result = this.taskProvider.currentProcessCompletePercent();
+            p = result[0];
+            this.currentStep = result[1];
+            this.totalSteps = result[2];
         } else {
             if( this.applicationTasks && this.applicationTasks.activeTask ) {
                 let t = this.applicationTasks.activeTask;
 
-                let total: number;
-                let step: number = 1;
+                this.currentStep = 1;
                 let stepModifier: number = 0;
                 if( t.introTemplate !== TaskIntroTemplate.None ) stepModifier++;
                 if( t.outroTemplate !== TaskOutroTemplate.None ) stepModifier++;
 
-                total = t.totalSteps + stepModifier;
+                this.totalSteps = t.totalSteps + stepModifier;
 
-                if( t.taskStatus == TaskStatus.Intro ) step = 1;
-                else if( t.taskStatus == TaskStatus.Outro || t.taskStatus == TaskStatus.Complete ) step = total;
+                if( t.taskStatus == TaskStatus.Intro ) this.currentStep  = 1;
+                else if( t.taskStatus == TaskStatus.Outro || t.taskStatus == TaskStatus.Complete ) this.currentStep  = this.totalSteps;
                 else {
-                    step = t.currentStep + 1;
+                    this.currentStep = t.currentStep + 1;
                 }
 
-                p = step / total * 100;
-                console.info(`Percent: ${p}, from ${t.currentStep} or ${step} and ${t.totalSteps} with modifier ${stepModifier}`);
+                p = this.currentStep / this.totalSteps * 100;
+                //console.info(`Percent: ${p}, from ${t.currentStep} or ${step} and ${t.totalSteps} with modifier ${stepModifier}`);
             }
         }
 
-        return p;
+        this.currentPercentComplete = p;
+        this.updateCurrentStatus();
     }
 
     public get canStepPrevious(): boolean {
@@ -150,8 +181,6 @@ export class TrackerService implements ITaskRouterProvider {
         if( !this.applicationTasks )
             throw new Error("No tasks loaded for the current application!");
 
-        console.debug(`getting activeTask`);
-
         return this.applicationTasks.activeTask;
     }
 
@@ -177,24 +206,28 @@ export class TrackerService implements ITaskRouterProvider {
                 break;
             case TaskStatus.Stepping:
                 task.currentStep += currentDirection;
-                // console.log(`Current Step is ${task.currentStep}`);
-
-                if( this.taskProvider )
+                console.log(`Current Step is ${task.currentStep}`);
+                if( this.taskProvider ) {
                     if( (currentDirection == ApplicationTasks.DIRECTION_FORWARDS && this.taskProvider.stepNext())
                     ||  (currentDirection == ApplicationTasks.DIRECTION_BACKWARDS && this.taskProvider.stepPrevious())
                      ) {
-                        // console.info(`Stepping handled by client process`);
+                        console.info(`Stepping handled by client process`);
                         // early exit
+                        this.calculateCurrentProgress();                        
+
                         return;
                     }
+                }
 
                 url = task.routerUrl;
                 if( task.routes.length > 0) {
                     url = task.routes[task.currentStep - 1];
                 }
 
-                if (currentDirection == ApplicationTasks.DIRECTION_BACKWARDS && (lastStatus == TaskStatus.Outro || lastStatus == TaskStatus.Complete)) {
-                    console.info(`Going backwards from a finished page`);
+                if (task.taskType == 1
+                && currentDirection == ApplicationTasks.DIRECTION_BACKWARDS 
+                && lastStatus == TaskStatus.Outro) {
+                    console.log(`Going backwards - have task ${task.name}, and status ${lastStatus}`);
                     url += '&f=l';
                 }
                 break;
@@ -204,26 +237,34 @@ export class TrackerService implements ITaskRouterProvider {
                     default:
                         task.currentStep = task.totalSteps + 1;
                         url = `${task.routerUrl}/finished`;
+                        // There must be a better way of doing this
+                        this.currentStep = this.totalSteps;
+                        this.currentPercentComplete = 100;
                         break;
                 }
                 break;
         }
+        
+        this.calculateCurrentProgress();
 
         console.info(`Navigate to ${url}`);
-
         this.router.navigate( [url], {} );
         return false;
     }
 
     /**
      * Get a task based on its routerUrl, from either of the candidate task pools.
-     * @param pathName (string) - the path name (from window.location.pathname) to search for
+     * @param pathName (string) - the path name (from window.location.pathname) to search for. This MUST be URIdecoded
      */
     public taskByPathName( pathName: string ) : Task {        
-        let t: Task = this.taskFromListByPathName( this.applicationTasks.tasks, pathName );
+        let searchPath = pathName.split('&')[0]; // avoid any 'params' -- 
+
+        console.info(`finding path ${searchPath}`);
+
+        let t: Task = this.taskFromListByPathName( this.applicationTasks.tasks, searchPath );
 
         if( !t && this.applicationTasks.overrideTasks ) {
-            let t: Task = this.taskFromListByPathName( this.applicationTasks.overrideTasks, pathName );
+            let t: Task = this.taskFromListByPathName( this.applicationTasks.overrideTasks, searchPath );
         }
 
         return t;
@@ -305,8 +346,10 @@ export class TrackerService implements ITaskRouterProvider {
         t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 1, name: "CreateApplication", title: "Create Application", 
             routerUrl: "/application/create", 
             routes: ["/application/create", "/application/create/step2"],
-            totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
+            totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default,
+            complete: true } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 2, name: "FirstForm", title: "A form",
+            taskType: 1,
             routerUrl: '/form/this-is-my-form',
             totalSteps: 9, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 4, name: "SelectInterviewer", title: "Select your Interviewer" } ) )
@@ -417,9 +460,24 @@ export class TrackerService implements ITaskRouterProvider {
         return t;
     }
 
+    private updateCurrentStatus(): void {
+        console.info(`Updating current status`);
+        this._trackerEventSource.next( new TrackerEvent({activeTask: this.activeTask, currentStep: this.currentStep, totalSteps: this.totalSteps, percentComplete: this.currentPercentComplete}));
+    }
+
+    // Observable event source
+    private _trackerEventSource = new BehaviorSubject<TrackerEvent>( new TrackerEvent( { percentComplete: 0 }) );
+
+    // Observable event stream
+    trackerEventStream$ = this._trackerEventSource.asObservable();
+
     private taskProvider: ITaskProvider;
 
     private sequences: Array<Sequence>;
     private taskIntros: Array<TaskIntro>;
     private taskOutros: Array<TaskOutro>;
+
+    private totalSteps: number;
+    private currentStep: number;
+    private currentPercentComplete: number;
 }

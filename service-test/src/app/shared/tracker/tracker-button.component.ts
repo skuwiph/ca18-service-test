@@ -16,7 +16,7 @@ export class TrackerButtonComponent implements OnInit {
         console.debug(`Reading tracker applicationTasks`);
 
         if( this.tracker.applicationTasks ) {
-            if( this.tracker.activeTask ) {
+            if( this.tracker.applicationTasks.activeTask ) {
                 this.currentTaskName = this.tracker.activeTask.name;
             } else {
                 if( this.tracker.applicationTasks.nextTaskInQueue ) {

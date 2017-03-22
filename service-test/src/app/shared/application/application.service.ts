@@ -15,6 +15,9 @@ export class ApplicationService implements IBusinessRuleData {
         this.applicationData.set('firstName','Tomas');
         this.applicationData.set('lastName', 'Walker');
         this.applicationData.set('email', 'twalker@example.com');
+        this.applicationData.set('heartbroken', 'N');
+        this.applicationData.set('iddCode', '44');
+        this.applicationData.set('telephoneNumber', '12345678');
     }
 
     // Implementation of IBusinessRuleData interface

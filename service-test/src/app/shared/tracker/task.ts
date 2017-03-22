@@ -22,6 +22,7 @@ export class Task {
             id?: number,
             name?: string,
             title?: string,
+            taskType?: number,
             routerUrl?: string,
             routes?: string[],
             totalSteps?: number,
@@ -37,6 +38,8 @@ export class Task {
         this.title = options.title;
         this.routerUrl = options.routerUrl;
         
+        this.taskType = options.taskType;
+
         // Optionals
         this.routes = options.routes || [];
         this.totalSteps = options.totalSteps || 1;
@@ -65,6 +68,8 @@ export class Task {
 
     sequence: Sequence;
     isValid: boolean;
+
+    taskType: number;
 }
 
 export enum TaskIntroTemplate {

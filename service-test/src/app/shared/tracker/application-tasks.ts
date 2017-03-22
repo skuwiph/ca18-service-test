@@ -22,10 +22,9 @@ export class ApplicationTasks {
         if( !this.currentTask ) {
             this.currentTask = this.nextTaskInQueue;
             this.currentTask.taskStatus = TaskStatus.Intro;
-
-            console.debug(`Got task '${this.currentTask.name}' with status ${this.currentTask.taskStatus}`);
+            //console.debug(`Got task '${this.currentTask.name}' with status ${this.currentTask.taskStatus}`);
         } else {
-            console.info(`Got current task ${this.currentTask.name} with status ${this.currentTask.taskStatus}`);
+            //console.info(`Got current task ${this.currentTask.name} with status ${this.currentTask.taskStatus}`);
             lastStatus = this.currentTask.taskStatus;
 
             // We have a currentTask, proceed to the next step
