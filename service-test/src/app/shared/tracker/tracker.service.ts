@@ -354,7 +354,7 @@ export class TrackerService implements ITaskRouterProvider {
             routerUrl: "/application/create", 
             routes: ["/application/create", "/application/create/step2"],
             totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default,
-            complete: true } ) )
+            complete: false } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 2, name: "FirstForm", title: "A form",
             taskType: 1,
             routerUrl: '/form/this-is-my-form',
