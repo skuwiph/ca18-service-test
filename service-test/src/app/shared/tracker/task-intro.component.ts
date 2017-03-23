@@ -24,7 +24,10 @@ export class TaskIntroComponent extends TrackedTaskComponent implements OnInit, 
 
     ngOnInit() {
         super.ngOnInit();
+        this.tracker.calculateCurrentProgress();
     }
+
+    ngOnDestroy() {}
 
     initialise(): void {
         console.info(`Initialise: Active: ${this.tracker.applicationTasks.activeTask.name}`);
@@ -35,8 +38,6 @@ export class TaskIntroComponent extends TrackedTaskComponent implements OnInit, 
         this.bodyText = ti.bodyText;
         this.imageUrl = ti.image;
     }
-
-    ngOnDestroy() {}
 
     sequenceTitle: string;
     title: string;

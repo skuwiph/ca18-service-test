@@ -12,10 +12,10 @@ export abstract class TrackedTaskComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         if( !this.sc_tracker.applicationTasks || !this.sc_tracker.applicationTasks.activeTask ) {
-            console.debug("Got no active task, routing to basepath");
+            // console.debug("Got no active task, routing to basepath");
             this.sc_router.navigateByUrl("home");
         } else {
-            console.info(`TrackedTaskComponent: Active: ${this.sc_tracker.applicationTasks.activeTask.name}`);
+            // console.info(`TrackedTaskComponent: Active: ${this.sc_tracker.applicationTasks.activeTask.name}`);
             this.initialise();
         }
     }

@@ -88,7 +88,6 @@ export class TrackerService implements ITaskRouterProvider {
      */
     public calculateCurrentProgress(): void {
         let p: number = 0;
-
         if( this.taskProvider ) {
             let result = this.taskProvider.currentProcessCompletePercent();
             p = result[0];
@@ -98,14 +97,14 @@ export class TrackerService implements ITaskRouterProvider {
             if( this.applicationTasks && this.applicationTasks.activeTask ) {
                 let t = this.applicationTasks.activeTask;
 
-                this.currentStep = 1;
+                this.currentStep = 0;
                 let stepModifier: number = 0;
                 if( t.introTemplate !== TaskIntroTemplate.None ) stepModifier++;
                 if( t.outroTemplate !== TaskOutroTemplate.None ) stepModifier++;
 
                 this.totalSteps = t.totalSteps + stepModifier;
 
-                if( t.taskStatus == TaskStatus.Intro ) this.currentStep  = 1;
+                if( t.taskStatus == TaskStatus.Intro ) this.currentStep  = 0;
                 else if( t.taskStatus == TaskStatus.Outro || t.taskStatus == TaskStatus.Complete ) this.currentStep  = this.totalSteps;
                 else {
                     this.currentStep = t.currentStep + 1;
@@ -192,6 +191,7 @@ export class TrackerService implements ITaskRouterProvider {
      */
     public navigateToTaskUrl( task: Task, currentDirection: number, lastStatus: TaskStatus ): boolean {
         let url : string;
+        let params;
 
         switch( task.taskStatus ) {
 
@@ -211,13 +211,14 @@ export class TrackerService implements ITaskRouterProvider {
                     if( (currentDirection == ApplicationTasks.DIRECTION_FORWARDS && this.taskProvider.stepNext())
                     ||  (currentDirection == ApplicationTasks.DIRECTION_BACKWARDS && this.taskProvider.stepPrevious())
                      ) {
-                        console.info(`Stepping handled by client process`);
+                        // console.info(`Stepping handled by client process`);
                         // early exit
                         this.calculateCurrentProgress();                        
 
                         return;
                     }
                 }
+
 
                 url = task.routerUrl;
                 if( task.routes.length > 0) {
@@ -227,8 +228,8 @@ export class TrackerService implements ITaskRouterProvider {
                 if (task.taskType == 1
                 && currentDirection == ApplicationTasks.DIRECTION_BACKWARDS 
                 && lastStatus == TaskStatus.Outro) {
-                    console.log(`Going backwards - have task ${task.name}, and status ${lastStatus}`);
-                    url += '&f=l';
+                    // console.log(`Going backwards - have task ${task.name}, and status ${lastStatus}`);
+                    params = { f: 'l' };
                 }
                 break;
             case TaskStatus.Outro: 
@@ -247,8 +248,14 @@ export class TrackerService implements ITaskRouterProvider {
         
         this.calculateCurrentProgress();
 
+        if( !url ) {
+            throw new Error(`For task ${task.id}, the target Url was undefined!`);
+        }
+
         console.info(`Navigate to ${url}`);
-        this.router.navigate( [url], {} );
+        if( params ) { console.info(`params: ${params.f}`); }
+
+        this.router.navigate( [url], { queryParams: params } );
         return false;
     }
 
@@ -461,7 +468,6 @@ export class TrackerService implements ITaskRouterProvider {
     }
 
     private updateCurrentStatus(): void {
-        console.info(`Updating current status`);
         this._trackerEventSource.next( new TrackerEvent({activeTask: this.activeTask, currentStep: this.currentStep, totalSteps: this.totalSteps, percentComplete: this.currentPercentComplete}));
     }
 

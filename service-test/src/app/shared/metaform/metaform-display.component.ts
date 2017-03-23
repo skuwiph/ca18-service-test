@@ -36,43 +36,33 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
         private formService: MetaformService
     ) {
         super(router, tracker);
-        console.info(`MetaformDisplayComponent`);}
+    }
 
     ngOnInit() {
-        console.info(`MetaformDisplayComponent::ngOnInit`);
-        super.ngOnInit();
-
+        // NOTE(ian): We need to do this before running super.ngOnInit() so that
+        // calculations work properly.
         this.tracker.registerTaskProvider(this);
-
+        super.ngOnInit();
     }
 
     ngOnDestroy() {
-        super.ngOnDestroy();
         this.tracker.unregisterTaskProvider(this);
+        super.ngOnDestroy();
     }
 
     initialise(): void {
-        console.log(`MetaformDisplayComponent:Init`);
         let path = decodeURIComponent(window.location.pathname);
-        let param = getUrlParameter('f');
 
-        //let urlParams = new URLSearchParams(window.location.search);
-        //let overrideCurrentQuestion = urlParams.get('f') === 'l';
-        console.log(`Parameter:'${param}'`);
-        let overrideCurrentQuestion = param === '1';
+        let param = this.route.snapshot.queryParams['f'];
+        let overrideCurrentQuestion = param === 'l';
         
         let t: Task = this.tracker.taskByPathName(path);
-
-        console.assert( t, `Task is not defined by path ${path}`);
 
         this.windowSize.width$.subscribe( x => { this.isMobile = (window.innerWidth <= 800); });
 
         this.formName = this.route.snapshot.params['formName'];
         this.form = this.formService.loadForm(this.formName);
 
-        console.log(`1`);
-
-        // this.firstDisplayed = 0;
         this.currentQuestion = -1;
 
         if( overrideCurrentQuestion ){
@@ -80,19 +70,9 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
             console.info(`Overriding start question -- showing question ${this.currentQuestion} out of ${this.form.totalQuestionCount}`);
         }
 
-        console.log(`2`);
-
         this.tracker.setActiveTask(t);
-
-        console.log(`3`);
-
         this.tracker.activeTask.totalSteps = this.form.questions.length - 1;
-
-        console.log(`4`);
-
         this.title = this.tracker.activeTask.sequence.title;
-
-        console.log(`5`);
         this.displayQuestions();        
     }
 
@@ -101,54 +81,48 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
     currentProcessCompletePercent(): [number, number, number] {
         let p = 0;
 
-        //console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
-
         p = ( this.currentQuestion + 1 ) / ( this.form.totalQuestionCount + 1) * 100;
-        console.debug(`Complete: ${p}%`);
+        console.debug(`MetaformDisplayComponent->Complete: ${p}% ( ${this.currentQuestion}/${this.form.totalQuestionCount} )`);
+
+        //console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
 
         return [p, this.currentQuestion + 1, this.form.totalQuestionCount + 1];
     }
 
     stepNext(): boolean {
-        console.info(`Increment page display count`);
         this.displayQuestions();
         return true;
     }
 
     stepPrevious(): boolean {
-        console.info(`Decrement page display count`);
         this.displayQuestions(false);
         return true;
     }
 
     private displayQuestions( forward = true ) {
-        console.info(`displayQuestions`);
         // TODO(ian): override display type 
         this.isMobile = true;
 
-        // // TODO(ian): Hrm
-        // //this.currentQuestion = this.tracker.activeTask.currentStep - 1;
         console.info(`current question to display: ${this.currentQuestion}`);
 
         let result = this.formService.getNextQuestionBlock(this.form, this.applicationService, this.isMobile, this.currentQuestion, forward);
 
         this.questionsToDisplay = result[0];
         this.currentQuestion = result[1];
-        // this.atStart = result[2];
-        // this.atEnd = result[3];
 
         if( this.questionsToDisplay ) {
-            console.info(`Current = ${this.currentQuestion}`);
-            console.info(`displayQuestions: result.questions: ${this.questionsToDisplay.length}`);
-
+            // console.info(`Current = ${this.currentQuestion}`);
+            // console.info(`displayQuestions: result.questions: ${this.questionsToDisplay.length}`);
             this.formGroup = this.formService.toFormGroup( this.questionsToDisplay );
             this.currentSection = this.formService.getSectionForQuestion( this.form, this.questionsToDisplay[0]);
             this.subtitle = this.currentSection.title;
 
             this.pageIsValid = this.isPageValid();
-        } else {
-            console.error(`questionToDisplay is farked`);
+        // } else {
+        //     console.error(`questionToDisplay is farked`);
         }
+    
+        this.tracker.calculateCurrentProgress();
     }
 
     private isPageValid() : boolean {

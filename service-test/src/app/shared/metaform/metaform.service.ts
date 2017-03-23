@@ -153,7 +153,7 @@ export class MetaformService {
         let atStart = false;
         let atEnd = false;
 
-        console.info(`getNextQuestionBlock`);
+        // console.info(`getNextQuestionBlock`);
 
         // We're on mobile, so we must check the rules ourselves and 
         // only return the one question 
@@ -240,7 +240,7 @@ export class MetaformService {
             });
 		});
 
-        console.info(`toFormGroup: ${group.length} items`);
+        // console.info(`toFormGroup: ${group.length} items`);
 
 		return new FormGroup(group);
 	}
@@ -302,7 +302,7 @@ export class MetaformService {
 	private checkUpdatedFormVersion( name: string ) : Metaform {
 		let m = new Metaform();
 
-        console.debug(`returning test_form`);
+        // console.debug(`returning test_form`);
 
         m = this.test_form;
 
@@ -334,7 +334,11 @@ export class MetaformService {
             },
             {
                 id: 2,
-                title: 'About your Lungfish',
+                title: 'Contact details',
+            },
+            {
+                id: 3,
+                title: 'About your fish',
             }
         ],
         questions: [
@@ -434,13 +438,13 @@ export class MetaformService {
                 ]
             },                    
             {
-                sectionId: 2,
-                caption: 'A last question from section #2',
+                sectionId: 3,
+                caption: 'A question from section #3',
                 name: 'options',
                 items: [
                     { 
                         controlType: 'optionselect', 
-                        label: 'Colour', 
+                        label: 'What colour is your lungfish?', 
                         key: 'fishColour', 
                         value: "",
                         required: true,
