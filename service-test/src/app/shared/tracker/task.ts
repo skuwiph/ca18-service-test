@@ -1,14 +1,6 @@
 import { Sequence } from './sequence';
 
 export class Task {
-    // We do not know how many steps each task may have;
-    // that's the purview of the specific tasks themselves --
-    // for example, a metaform may have [n] questions, or [n] pages, 
-    // depending on display type, while a process like record skills
-    // may have multiple steps, dependent on how many skills the applicant
-    // adds
-
-
     public validForRules(): boolean {
         return true;
     }
@@ -22,7 +14,7 @@ export class Task {
             id?: number,
             name?: string,
             title?: string,
-            taskType?: number,
+            taskType?: TaskType,
             routerUrl?: string,
             routes?: string[],
             totalSteps?: number,
@@ -38,9 +30,8 @@ export class Task {
         this.title = options.title;
         this.routerUrl = options.routerUrl;
         
-        this.taskType = options.taskType;
-
         // Optionals
+        this.taskType = options.taskType || TaskType.Default;
         this.routes = options.routes || [];
         this.totalSteps = options.totalSteps || 1;
         this.introTemplate = options.introTemplate || TaskIntroTemplate.None;
@@ -69,7 +60,7 @@ export class Task {
     sequence: Sequence;
     isValid: boolean;
 
-    taskType: number;
+    taskType: TaskType;
 }
 
 export enum TaskIntroTemplate {
@@ -87,4 +78,9 @@ export enum TaskStatus {
     Stepping,
     Outro,
     Complete
+}
+
+export enum TaskType {
+    Default = 0,
+    Metaform = 1
 }

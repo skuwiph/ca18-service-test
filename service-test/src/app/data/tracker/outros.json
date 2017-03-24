@@ -1,0 +1,49 @@
+[
+  {
+    "task": {
+      "sequence": {
+        "id": 1,
+        "name": "PrepareForInterview",
+        "title": "Prepare for Interview"
+      },
+      "id": 1,
+      "name": "CreateApplication",
+      "title": "Create Application",
+      "routerUrl": "/application/create",
+      "taskType": 0,
+      "routes": [
+        "/application/create",
+        "/application/create/step2"
+      ],
+      "totalSteps": 2,
+      "introTemplate": 1,
+      "outroTemplate": 1,
+      "complete": false,
+      "currentStep": 0
+    },
+    "bodyText": "Congratulations on completing the create application task!",
+    "image": "img/sequence/medal.png"
+  },
+  {
+    "task": {
+      "sequence": {
+        "id": 1,
+        "name": "PrepareForInterview",
+        "title": "Prepare for Interview"
+      },
+      "id": 2,
+      "name": "FirstForm",
+      "title": "A form",
+      "routerUrl": "/form/this-is-my-form",
+      "taskType": 1,
+      "routes": [],
+      "totalSteps": 9,
+      "introTemplate": 1,
+      "outroTemplate": 1,
+      "complete": false,
+      "currentStep": 0
+    },
+    "bodyText": "Congratulations on completing the metaform task!",
+    "image": "img/sequence/like.png"
+  }
+]

@@ -1,7 +1,11 @@
-
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Http } from '@angular/http';
+
+import {Observable} from 'rxjs/Rx';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+
+import 'rxjs/add/observable/forkJoin';
 
 import { ITaskProvider } from './task-provider';
 import { ITaskRouterProvider } from './task-router-provider';
@@ -9,29 +13,15 @@ import { ITaskRouterProvider } from './task-router-provider';
 import { ApplicationTasks } from './application-tasks';
 
 import { Sequence } from './sequence';
-import { Task, TaskIntroTemplate, TaskOutroTemplate, TaskStatus } from './task';
+import { Task, TaskIntroTemplate, TaskOutroTemplate, TaskStatus, TaskType } from './task';
 import { TaskIntro } from './task-intro';
 import { TaskOutro } from './task-outro';
+import { TrackerEvent, TrackerEventType } from './tracker-event';
+import { TrackerTaskEvent } from './tracker-task-event';
 
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-export class TrackerEvent {
-    activeTask: Task;
-    currentStep: number;
-    totalSteps: number;
-    percentComplete: number;
+import { BusinessRuleService } from '../rule/business-rule.service';
+import { IBusinessRuleData } from '../rule/business-rule';
 
-    constructor( options: {
-        activeTask?: Task,
-        currentStep?: number,
-        totalSteps?: number,
-        percentComplete?: number
-     }) {
-         this.activeTask = options.activeTask;
-         this.currentStep = options.currentStep;
-         this.totalSteps = options.totalSteps;
-         this.percentComplete = options.percentComplete;
-     }
-}
 
 @Injectable()
 export class TrackerService implements ITaskRouterProvider {
@@ -39,15 +29,9 @@ export class TrackerService implements ITaskRouterProvider {
      * Initialise. Call from application bootstrap
      */
     public initialise(): void {
-        this.applicationTasks = this.getTasks();
-        if( !this.applicationTasks )
-            throw new Error("No tasks loaded for the current application!");
+        this.updateSendEvent(TrackerEventType.Initialising);
 
-        // Okay, we must iterate through the tasks and determine which one
-        // is incomplete and which conforms to the expected business rules.
-        // This will be our next task, so once the homepage 'next' button
-        // is called, this will become the task to route to.
-        this.applicationTasks.getNextTask();
+        this.loadTrackerData();
 
         // // If we have a page already, we probably want to set that to the
         // // active task
@@ -61,8 +45,49 @@ export class TrackerService implements ITaskRouterProvider {
         //         console.info( `Active task by path is: ${this.applicationTasks.activeTask.name}`);
         // }
 
+
         // For safety during development, let's force a redirect to homepage
         this.router.navigateByUrl('/home');
+    }
+    
+    public loadTrackerData() {
+        Observable.forkJoin(
+            this.http.get('/app/data/tracker/sequences.json')
+                .map((res) => res.json()),
+            this.http.get('/app/data/tracker/tasks.json')
+                .map((res) => res.json()),
+            this.http.get('/app/data/tracker/intros.json')
+                .map((res) => res.json()),
+            this.http.get('/app/data/tracker/outros.json')
+                .map((res) => res.json())
+        ).subscribe(
+        data => {
+            this.applicationTasks = new ApplicationTasks();
+            console.info(`sequences:`);
+            this.sequences = <Array<Sequence>>(data[0]);
+            console.info(`tasks:`);
+            this.applicationTasks.tasks = <Array<Task>>(data[1]);
+            this.taskIntros = <Array<TaskIntro>>(data[2]);
+            this.taskOutros = <Array<TaskOutro>>(data[3]);;
+
+            this.updateSendEvent( TrackerEventType.TasksLoaded );
+
+            // Okay, we must iterate through the tasks and determine which one
+            // is incomplete and which conforms to the expected business rules.
+            // This will be our next task, so once the homepage 'next' button
+            // is called, this will become the task to route to.
+            this.applicationTasks.getNextTask();
+        },
+        err => console.error(err)
+        );
+    }
+
+    /**
+     * Esnure we load the task completion statistics for the user
+     * @param applicationId (number) - user's applicationId
+     */
+    public loadTasksForApplication(applicationId: number) {
+        // This should also load any override tasks
     }
 
     /**
@@ -85,6 +110,8 @@ export class TrackerService implements ITaskRouterProvider {
 
     /**
      * Get the current process complete percentage
+     * NOTE: this calls out to any registered taskProvider.
+     * SIDE-EFFECT: this will emit an event on the TrackerTaskEventStream$
      */
     public calculateCurrentProgress(): void {
         let p: number = 0;
@@ -104,14 +131,15 @@ export class TrackerService implements ITaskRouterProvider {
 
                 this.totalSteps = t.totalSteps + stepModifier;
 
-                if( t.taskStatus == TaskStatus.Intro ) this.currentStep  = 0;
-                else if( t.taskStatus == TaskStatus.Outro || t.taskStatus == TaskStatus.Complete ) this.currentStep  = this.totalSteps;
-                else {
+                if( t.taskStatus == TaskStatus.Intro ) {
+                    this.currentStep  = 0;
+                } else if( t.taskStatus == TaskStatus.Outro || t.taskStatus == TaskStatus.Complete ) {
+                    this.currentStep  = this.totalSteps;
+                } else {
                     this.currentStep = t.currentStep + 1;
                 }
 
                 p = this.currentStep / this.totalSteps * 100;
-                //console.info(`Percent: ${p}, from ${t.currentStep} or ${step} and ${t.totalSteps} with modifier ${stepModifier}`);
             }
         }
 
@@ -119,6 +147,11 @@ export class TrackerService implements ITaskRouterProvider {
         this.updateCurrentStatus();
     }
 
+    /**
+     * Can we go backwards
+     * NOTE: Calls out to any registered taskProvider
+     * NOTE: Probably incomplete implementation
+     */
     public get canStepPrevious(): boolean {
 
         if( this.taskProvider ) return this.taskProvider.previousEnabled();
@@ -138,6 +171,11 @@ export class TrackerService implements ITaskRouterProvider {
         return false;
     }
 
+    /**
+     * Can we go forwards?
+     * NOTE: Calls out to any registered taskProvider
+     * NOTE: Probably incomplete implementation
+     */
     public get canStepNext(): boolean {
         if( this.taskProvider ) return this.taskProvider.nextEnabled();
 
@@ -159,8 +197,11 @@ export class TrackerService implements ITaskRouterProvider {
      * Step to the next step in the sequence
      */
     public next(): boolean {
+        let t: Task = this.applicationTasks.activeTask;
         this.applicationTasks.getNextItem(this);
-
+        if( t !== this.applicationTasks.activeTask ) {
+            this.updateSendEvent( TrackerEventType.ActiveTaskChanged );
+        }
         return false;
     }
 
@@ -168,7 +209,11 @@ export class TrackerService implements ITaskRouterProvider {
      * Step to the previous step in the sequence
      */
     public previous(): boolean {
+        let t: Task = this.applicationTasks.activeTask;
         this.applicationTasks.getPreviousItem(this);
+        if( t !== this.applicationTasks.activeTask ) {
+            this.updateSendEvent( TrackerEventType.ActiveTaskChanged );
+        }
 
         return false;
     }
@@ -206,29 +251,24 @@ export class TrackerService implements ITaskRouterProvider {
                 break;
             case TaskStatus.Stepping:
                 task.currentStep += currentDirection;
-                console.log(`Current Step is ${task.currentStep}`);
                 if( this.taskProvider ) {
                     if( (currentDirection == ApplicationTasks.DIRECTION_FORWARDS && this.taskProvider.stepNext())
                     ||  (currentDirection == ApplicationTasks.DIRECTION_BACKWARDS && this.taskProvider.stepPrevious())
                      ) {
-                        // console.info(`Stepping handled by client process`);
                         // early exit
                         this.calculateCurrentProgress();                        
-
                         return;
                     }
                 }
-
 
                 url = task.routerUrl;
                 if( task.routes.length > 0) {
                     url = task.routes[task.currentStep - 1];
                 }
 
-                if (task.taskType == 1
+                if (task.taskType == TaskType.Metaform
                 && currentDirection == ApplicationTasks.DIRECTION_BACKWARDS 
                 && lastStatus == TaskStatus.Outro) {
-                    // console.log(`Going backwards - have task ${task.name}, and status ${lastStatus}`);
                     params = { f: 'l' };
                 }
                 break;
@@ -237,10 +277,8 @@ export class TrackerService implements ITaskRouterProvider {
                     case TaskOutroTemplate.Default:
                     default:
                         task.currentStep = task.totalSteps + 1;
-                        url = `${task.routerUrl}/finished`;
-                        // There must be a better way of doing this
                         this.currentStep = this.totalSteps;
-                        this.currentPercentComplete = 100;
+                        url = `${task.routerUrl}/finished`;
                         break;
                 }
                 break;
@@ -301,7 +339,6 @@ export class TrackerService implements ITaskRouterProvider {
         return this.taskOutros.find(ti => ti.task == task);
     }
 
-
     /**
      * Set the active task
      * @param t (Task) - the task to make active
@@ -313,19 +350,20 @@ export class TrackerService implements ITaskRouterProvider {
         }
     }
 
-    public applicationTasks: ApplicationTasks;
+    public applicationTasks: ApplicationTasks = new ApplicationTasks();
 
     /**
      * Constructor
      * @param http (Http) - http service
      * @param router (Router) - router service
      */
-    constructor( 
+    constructor ( 
         private http: Http, 
-        private router: Router 
+        private router: Router,
+        private rules: BusinessRuleService
     ) {
         console.debug("TrackerService::ctor");
-     }
+    }
 
     /**
      * Load sequences
@@ -356,7 +394,7 @@ export class TrackerService implements ITaskRouterProvider {
             totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default,
             complete: false } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 2, name: "FirstForm", title: "A form",
-            taskType: 1,
+            taskType: TaskType.Metaform,
             routerUrl: '/form/this-is-my-form',
             totalSteps: 9, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
         t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 4, name: "SelectInterviewer", title: "Select your Interviewer" } ) )
@@ -468,14 +506,23 @@ export class TrackerService implements ITaskRouterProvider {
     }
 
     private updateCurrentStatus(): void {
-        this._trackerEventSource.next( new TrackerEvent({activeTask: this.activeTask, currentStep: this.currentStep, totalSteps: this.totalSteps, percentComplete: this.currentPercentComplete}));
+        this._trackerTaskEventSource.next( new TrackerTaskEvent({activeTask: this.activeTask, currentStep: this.currentStep, totalSteps: this.totalSteps, percentComplete: this.currentPercentComplete}));
+    }
+
+    private updateSendEvent( event: TrackerEventType ) {
+        console.debug(`TrackerService->Sending event '${event}'`);
+        this._trackerEventSource.next( new TrackerEvent( event ));
     }
 
     // Observable event source
-    private _trackerEventSource = new BehaviorSubject<TrackerEvent>( new TrackerEvent( { percentComplete: 0 }) );
+    private _trackerTaskEventSource = new BehaviorSubject<TrackerTaskEvent>( new TrackerTaskEvent( { percentComplete: 0 }) );
 
     // Observable event stream
+    trackerTaskEventStream$ = this._trackerTaskEventSource.asObservable();
+
+    private _trackerEventSource = new BehaviorSubject<TrackerEvent>( new TrackerEvent( TrackerEventType.Initialising ) );
     trackerEventStream$ = this._trackerEventSource.asObservable();
+
 
     private taskProvider: ITaskProvider;
 

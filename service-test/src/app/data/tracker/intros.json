@@ -1,0 +1,49 @@
+[
+  {
+    "task": {
+      "sequence": {
+        "id": 1,
+        "name": "PrepareForInterview",
+        "title": "Prepare for Interview"
+      },
+      "id": 1,
+      "name": "CreateApplication",
+      "title": "Create Application",
+      "routerUrl": "/application/create",
+      "taskType": 0,
+      "routes": [
+        "/application/create",
+        "/application/create/step2"
+      ],
+      "totalSteps": 2,
+      "introTemplate": 1,
+      "outroTemplate": 1,
+      "complete": false,
+      "currentStep": 0
+    },
+    "bodyText": "Before your interview, we'd like you to think about a few things... like which types of camp you'd like to work on, which activities you'd like to be involved in and other experiences which may be relevant!",
+    "image": "img/sequence/sign-1.png"
+  },
+  {
+    "task": {
+      "sequence": {
+        "id": 1,
+        "name": "PrepareForInterview",
+        "title": "Prepare for Interview"
+      },
+      "id": 2,
+      "name": "FirstForm",
+      "title": "A form",
+      "routerUrl": "/form/this-is-my-form",
+      "taskType": 1,
+      "routes": [],
+      "totalSteps": 9,
+      "introTemplate": 1,
+      "outroTemplate": 1,
+      "complete": false,
+      "currentStep": 0
+    },
+    "bodyText": "This is some text about going on to do some form work, to test out the metaform. Let's hope it works!",
+    "image": "img/sequence/database.png"
+  }
+]

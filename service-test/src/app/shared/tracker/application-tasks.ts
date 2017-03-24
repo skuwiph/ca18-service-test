@@ -17,7 +17,7 @@ export class ApplicationTasks {
      */
     public getNextItem( routerProvider: ITaskRouterProvider ) { 
         let lastStatus;
-
+        
         // If there is no currentTask, we probably need one
         if( !this.currentTask ) {
             this.currentTask = this.nextTaskInQueue;
