@@ -1,10 +1,6 @@
 [
   {
-    "sequence": {
-      "id": 1,
-      "name": "PrepareForInterview",
-      "title": "Prepare for Interview"
-    },
+    "sequenceId": 1,
     "id": 1,
     "name": "CreateApplication",
     "title": "Create Application",
@@ -21,11 +17,7 @@
     "currentStep": 0
   },
   {
-    "sequence": {
-      "id": 1,
-      "name": "PrepareForInterview",
-      "title": "Prepare for Interview"
-    },
+    "sequenceId": 1,
     "id": 2,
     "name": "FirstForm",
     "title": "A form",
@@ -39,11 +31,7 @@
     "currentStep": 0
   },
   {
-    "sequence": {
-      "id": 1,
-      "name": "PrepareForInterview",
-      "title": "Prepare for Interview"
-    },
+    "sequenceId": 1,
     "id": 4,
     "name": "SelectInterviewer",
     "title": "Select your Interviewer",
@@ -56,11 +44,7 @@
     "currentStep": 0
   },
   {
-    "sequence": {
-      "id": 1,
-      "name": "PrepareForInterview",
-      "title": "Prepare for Interview"
-    },
+    "sequenceId": 1,
     "id": 5,
     "name": "MoreInformation",
     "title": "More Information",

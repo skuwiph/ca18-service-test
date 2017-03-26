@@ -2,7 +2,7 @@ import { Sequence } from './sequence';
 
 export class Task {
     constructor(options: {
-            sequence?: Sequence,
+            sequenceId?: number,
             id?: number,
             name?: string,
             title?: string,
@@ -15,7 +15,7 @@ export class Task {
             complete?: boolean
         } = {}
     ) {
-        this.sequence = options.sequence;
+        this.sequenceId = options.sequenceId;
 
         this.id = options.id;
         this.name = options.name;
@@ -49,7 +49,7 @@ export class Task {
 
     routes: string[];
 
-    sequence: Sequence;
+    sequenceId: number;
     isValid: boolean;
 
     taskType: TaskType;

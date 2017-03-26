@@ -72,7 +72,7 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
 
         this.tracker.setActiveTask(t);
         this.tracker.activeTask.totalSteps = this.form.questions.length - 1;
-        this.title = this.tracker.activeTask.sequence.title;
+        this.sequenceTitle = this.tracker.getActiveSequence().title;
         this.displayQuestions();        
     }
 
@@ -147,7 +147,7 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
         // this.payLoad = JSON.stringify(this.form.value);
     }
 
-    title: string;
+    sequenceTitle: string;
     subtitle: string;
 
     formName: string;

@@ -32,7 +32,7 @@ export class TaskOutroComponent extends TrackedTaskComponent implements OnInit, 
 
     initialise(): void {
         console.info(`Initialise: Active: ${this.tracker.activeTask.name}`);
-        this.sequenceTitle = this.tracker.activeTask.sequence.title;
+        this.sequenceTitle = this.tracker.getActiveSequence().title;
         this.title = this.tracker.activeTask.title;
 
         let ti: TaskOutro = this.tracker.taskOutroByTask(this.tracker.activeTask);

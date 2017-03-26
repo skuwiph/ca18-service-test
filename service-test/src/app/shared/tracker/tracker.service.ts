@@ -228,6 +228,18 @@ export class TrackerService implements ITaskRouterProvider {
         return this.applicationTasks.currentTask;
     }
 
+    /** 
+     * Get the active task's sequence
+     */
+    public getActiveSequence(): Sequence {
+        if( this.activeTask ) {
+            let sequenceId = this.activeTask.sequenceId;
+            return this.sequences.find( s => s.id == sequenceId );
+        }
+
+        return null;
+    }
+
     /**
      * Navigate to the desired task's URL
      * @param task (Task) - the task to navigate to
@@ -392,17 +404,17 @@ export class TrackerService implements ITaskRouterProvider {
         let t = new ApplicationTasks();
 
         // Load tasks and override tasks from the service
-        t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 1, name: "CreateApplication", title: "Create Application", 
+        t.tasks.push( new Task( { sequenceId: 1, id: 1, name: "CreateApplication", title: "Create Application", 
             routerUrl: "/application/create", 
             routes: ["/application/create", "/application/create/step2"],
             totalSteps: 2, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default,
             complete: false } ) )
-        t.tasks.push( new Task( { sequence: this.getSequenceById(1), id: 2, name: "FirstForm", title: "A form",
+        t.tasks.push( new Task( { sequenceId: 1, id: 2, name: "FirstForm", title: "A form",
             taskType: TaskType.Metaform,
             routerUrl: '/form/this-is-my-form',
             totalSteps: 9, introTemplate: TaskIntroTemplate.Default, outroTemplate: TaskOutroTemplate.Default } ) )
-        t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 4, name: "SelectInterviewer", title: "Select your Interviewer" } ) )
-        t.tasks.push( new Task( { sequence: this.getSequenceById(1),id: 5, name: "MoreInformation", title: "More Information" } ) )
+        t.tasks.push( new Task( { sequenceId: 1, id: 4, name: "SelectInterviewer", title: "Select your Interviewer" } ) )
+        t.tasks.push( new Task( { sequenceId: 1, id: 5, name: "MoreInformation", title: "More Information" } ) )
 
         return t;
     }
@@ -418,14 +430,14 @@ export class TrackerService implements ITaskRouterProvider {
 
         i.push( new TaskIntro( 
             { 
-                task: this.getTaskById(tasks, 1), 
+                taskId: 1, 
                 bodyText: 'Before your interview, we\'d like you to think about a few things... like which types of camp you\'d like to work on, which activities you\'d like to be involved in and other experiences which may be relevant!',
                 image: 'img/sequence/sign-1.png' 
             }) );
 
         i.push( new TaskIntro( 
             { 
-                task: this.getTaskById(tasks, 2), 
+                taskId: 2,
                 bodyText: 'This is some text about going on to do some form work, to test out the metaform. Let\'s hope it works!',
                 image: 'img/sequence/database.png' 
             }) );
@@ -445,12 +457,12 @@ export class TrackerService implements ITaskRouterProvider {
 
         i.push( new TaskOutro( 
             { 
-                task: this.getTaskById(tasks, 1), 
+                taskId: 1,
                 bodyText: 'Congratulations on completing the create application task!',
             }) );
         i.push( new TaskOutro( 
             { 
-                task: this.getTaskById(tasks, 2), 
+                taskId: 2,
                 bodyText: 'Congratulations on completing the metaform task!',
                 image: 'img/sequence/like.png'
             }) );

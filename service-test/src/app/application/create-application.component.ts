@@ -46,7 +46,7 @@ export class CreateApplicationComponent extends TrackedTaskComponent implements 
         console.info(`Task is ${t.name}, Id = ${t.id}`);
 
         this.tracker.setActiveTask(t);
-        this.sequenceTitle = this.tracker.activeTask.sequence.title;
+        this.sequenceTitle = this.tracker.getActiveSequence().title;
     }
 
     nextEnabled(): boolean { if( this.validButton && this.validButton === 'Y' ) { return true; } else return false; }

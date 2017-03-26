@@ -44,7 +44,7 @@ export class CreateApplicationStep2Component extends TrackedTaskComponent implem
         var path = window.location.pathname;
         let t: Task = this.tracker.taskByPathName(path);
         this.tracker.setActiveTask(t);
-        this.sequenceTitle = this.tracker.activeTask.sequence.title;
+        this.sequenceTitle = this.tracker.getActiveSequence().title;
     }
 
     nextEnabled(): boolean { return true; }
