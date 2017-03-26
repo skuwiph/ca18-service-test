@@ -30,7 +30,7 @@ export class TaskIntroComponent extends TrackedTaskComponent implements OnInit, 
     ngOnDestroy() {}
 
     initialise(): void {
-        console.info(`Initialise: Active: ${this.tracker.applicationTasks.activeTask.name}`);
+        console.info(`Initialise: Active: ${this.tracker.applicationTasks.currentTask.name}`);
         this.sequenceTitle = this.tracker.activeTask.sequence.title;
         this.title = this.tracker.activeTask.title;
 

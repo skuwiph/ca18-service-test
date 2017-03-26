@@ -1,14 +1,6 @@
 import { Sequence } from './sequence';
 
 export class Task {
-    public validForRules(): boolean {
-        return true;
-    }
-
-    public setComplete() : void {
-        this.taskStatus = TaskStatus.Complete;
-    }
-
     constructor(options: {
             sequence?: Sequence,
             id?: number,

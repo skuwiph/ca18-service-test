@@ -49,7 +49,7 @@ export class TrackerButtonComponent implements OnInit, OnDestroy {
 
             case TrackerEventType.ActiveTaskChanged:
                 console.info(`Active task changed`);
-                if( this.tracker.applicationTasks.activeTask ) {
+                if( this.tracker.applicationTasks.currentTask ) {
                     this.currentTaskName = this.tracker.activeTask.name;
                 } else {
                     if( this.tracker.applicationTasks.nextTaskInQueue ) {

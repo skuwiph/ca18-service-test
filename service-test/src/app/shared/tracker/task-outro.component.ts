@@ -38,7 +38,7 @@ export class TaskOutroComponent extends TrackedTaskComponent implements OnInit, 
         let ti: TaskOutro = this.tracker.taskOutroByTask(this.tracker.activeTask);
         this.bodyText = ti.bodyText;
         this.imageUrl = ti.image;
-    }
+    }    
 
     sequenceTitle: string;
     title: string;

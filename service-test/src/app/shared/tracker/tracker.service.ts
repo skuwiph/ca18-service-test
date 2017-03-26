@@ -39,10 +39,10 @@ export class TrackerService implements ITaskRouterProvider {
         // let t: Task = this.taskByPathName(window.location.pathname);
 
         // if( t ) {
-        //     this.applicationTasks.activeTask = t;
+        //     this.applicationTasks.currentTask = t;
 
         //     if( this.applicationTasks )
-        //         console.info( `Active task by path is: ${this.applicationTasks.activeTask.name}`);
+        //         console.info( `Active task by path is: ${this.applicationTasks.currentTask.name}`);
         // }
 
 
@@ -76,7 +76,7 @@ export class TrackerService implements ITaskRouterProvider {
             // is incomplete and which conforms to the expected business rules.
             // This will be our next task, so once the homepage 'next' button
             // is called, this will become the task to route to.
-            this.applicationTasks.getNextTask();
+            this.getNextTask(this.applicationTasks);
         },
         err => console.error(err)
         );
@@ -121,8 +121,8 @@ export class TrackerService implements ITaskRouterProvider {
             this.currentStep = result[1];
             this.totalSteps = result[2];
         } else {
-            if( this.applicationTasks && this.applicationTasks.activeTask ) {
-                let t = this.applicationTasks.activeTask;
+            if( this.applicationTasks && this.applicationTasks.currentTask ) {
+                let t = this.applicationTasks.currentTask;
 
                 this.currentStep = 0;
                 let stepModifier: number = 0;
@@ -156,14 +156,14 @@ export class TrackerService implements ITaskRouterProvider {
 
         if( this.taskProvider ) return this.taskProvider.previousEnabled();
 
-        if( this.applicationTasks.activeTask ) {
-            switch( this.applicationTasks.activeTask.taskStatus ) {
+        if( this.applicationTasks.currentTask ) {
+            switch( this.applicationTasks.currentTask.taskStatus ) {
                 case TaskStatus.Intro:
                     return false;
                 case TaskStatus.Outro:
                     return true;
                 case TaskStatus.Stepping:
-                    if ( this.applicationTasks.activeTask.introTemplate != TaskIntroTemplate.None )
+                    if ( this.applicationTasks.currentTask.introTemplate != TaskIntroTemplate.None )
                         return true;
             }
         }
@@ -179,14 +179,14 @@ export class TrackerService implements ITaskRouterProvider {
     public get canStepNext(): boolean {
         if( this.taskProvider ) return this.taskProvider.nextEnabled();
 
-        if( this.applicationTasks.activeTask ) {
-            switch( this.applicationTasks.activeTask.taskStatus ) {
+        if( this.applicationTasks.currentTask ) {
+            switch( this.applicationTasks.currentTask.taskStatus ) {
                 case TaskStatus.Intro:
                     return true;
                 case TaskStatus.Outro:
                     return true;
                 case TaskStatus.Stepping:
-                    return this.applicationTasks.activeTask.isValid;
+                    return this.applicationTasks.currentTask.isValid;
             }            
         }
 
@@ -197,9 +197,9 @@ export class TrackerService implements ITaskRouterProvider {
      * Step to the next step in the sequence
      */
     public next(): boolean {
-        let t: Task = this.applicationTasks.activeTask;
-        this.applicationTasks.getNextItem(this);
-        if( t !== this.applicationTasks.activeTask ) {
+        let t: Task = this.applicationTasks.currentTask;
+        this.getNextItem(this.applicationTasks, this);
+        if( t !== this.applicationTasks.currentTask ) {
             this.updateSendEvent( TrackerEventType.ActiveTaskChanged );
         }
         return false;
@@ -209,9 +209,9 @@ export class TrackerService implements ITaskRouterProvider {
      * Step to the previous step in the sequence
      */
     public previous(): boolean {
-        let t: Task = this.applicationTasks.activeTask;
-        this.applicationTasks.getPreviousItem(this);
-        if( t !== this.applicationTasks.activeTask ) {
+        let t: Task = this.applicationTasks.currentTask;
+        this.getPreviousItem(this.applicationTasks, this);
+        if( t !== this.applicationTasks.currentTask ) {
             this.updateSendEvent( TrackerEventType.ActiveTaskChanged );
         }
 
@@ -225,7 +225,7 @@ export class TrackerService implements ITaskRouterProvider {
         if( !this.applicationTasks )
             throw new Error("No tasks loaded for the current application!");
 
-        return this.applicationTasks.activeTask;
+        return this.applicationTasks.currentTask;
     }
 
     /**
@@ -319,24 +319,28 @@ export class TrackerService implements ITaskRouterProvider {
      * Find the task intro by task
      * @param task (Task) - current task
      */
-    public taskIntroByTask( task: Task ) : TaskIntro {
+    public taskIntroByTask( task: Task ): TaskIntro {
         if(!this.taskIntros) {
             this.taskIntros = this.getTaskIntros(this.applicationTasks);
         }
 
-        return this.taskIntros.find(ti => ti.task == task);
+        console.info(`Got ${this.taskIntros.length} task Intros. Looking for taskId ${task.id}`);
+
+        this.taskIntros.forEach( ti => console.info(`TI: ${ti.image}, ${ti.taskId}`));
+
+        return this.taskIntros.find(ti => ti.taskId == task.id);
     }
 
     /**
      * Find the task outro by task
      * @param task (Task) - current task
      */
-    public taskOutroByTask( task: Task ) : TaskOutro {
+    public taskOutroByTask( task: Task ): TaskOutro {
         if( !this.taskOutros ) {
             this.taskOutros = this.getTaskOutros(this.applicationTasks);
         }
 
-        return this.taskOutros.find(ti => ti.task == task);
+        return this.taskOutros.find(ti => ti.taskId == task.id);
     }
 
     /**
@@ -345,8 +349,8 @@ export class TrackerService implements ITaskRouterProvider {
      */
     public setActiveTask( t: Task ) {
         console.log(`Setting active task to ${t.name}`);
-        if( this.applicationTasks.activeTask !== t ) {
-            this.applicationTasks.activeTask = t;
+        if( this.applicationTasks.currentTask !== t ) {
+            this.applicationTasks.currentTask = t;
         }
     }
 
@@ -504,6 +508,147 @@ export class TrackerService implements ITaskRouterProvider {
 
         return t;
     }
+
+    /** Stripped out from applicationTasks */
+
+   public getNextTask(applicationTasks: ApplicationTasks) {
+        let t: Task = this.getFirstMatchingTask(applicationTasks);
+        
+        applicationTasks.nextTaskInQueue = t;
+        console.debug(`Got next task in queue '${t.name}', status ${t.taskStatus}`);
+    }
+
+    /** 
+     * Get the next valid item for the user to attend to
+     */
+    public getNextItem( applicationTasks: ApplicationTasks, routerProvider: ITaskRouterProvider ) { 
+        let lastStatus;
+        
+        // If there is no currentTask, we probably need one
+        if( !applicationTasks.currentTask ) {
+            applicationTasks.currentTask = applicationTasks.nextTaskInQueue;
+            applicationTasks.currentTask.taskStatus = TaskStatus.Intro;
+            //console.debug(`Got task '${this.currentTask.name}' with status ${this.currentTask.taskStatus}`);
+        } else {
+            //console.info(`Got current task ${this.currentTask.name} with status ${this.currentTask.taskStatus}`);
+            lastStatus = applicationTasks.currentTask.taskStatus;
+
+            // We have a currentTask, proceed to the next step
+            switch(applicationTasks.currentTask.taskStatus)
+            {
+                case TaskStatus.Intro:
+                    applicationTasks.currentTask.taskStatus = TaskStatus.Stepping;
+                    break;
+                case TaskStatus.Stepping:
+                    if( applicationTasks.currentTask.currentStep == applicationTasks.currentTask.totalSteps )                     {
+                        if( applicationTasks.currentTask.outroTemplate === TaskOutroTemplate.None ) {
+                            console.log("We are complete with no outro");
+                            this.completeCurrentTask(applicationTasks);
+                        } else {
+                            console.log("We are complete, head to outro");
+                            applicationTasks.currentTask.taskStatus = TaskStatus.Outro;
+                        }
+                    }
+                    break;
+                case TaskStatus.Outro:
+                    this.completeCurrentTask(applicationTasks);
+                    break;
+            }
+        }
+
+        // redirect to the current task's url
+        routerProvider.navigateToTaskUrl(applicationTasks.currentTask, ApplicationTasks.DIRECTION_FORWARDS, lastStatus);
+    }
+
+    /**
+     * Get the previous valid item where possible
+     * @param routerProvider (ITaskRouterProvider) - router provider
+     */
+    public getPreviousItem( applicationTasks: ApplicationTasks, routerProvider: ITaskRouterProvider ) {
+        if( !applicationTasks.currentTask ) {
+            return;
+        }
+
+        let lastStatus = applicationTasks.currentTask.taskStatus;
+
+        switch(applicationTasks.currentTask.taskStatus)
+        {
+            case TaskStatus.Intro:
+                // TODO: Check previous task in this list to see whether we can't step backwards?
+                return;
+            case TaskStatus.Stepping:
+                if( applicationTasks.currentTask.currentStep === 1 ) {
+                    applicationTasks.currentTask.taskStatus = TaskStatus.Intro;
+                }
+                break;
+            case TaskStatus.Outro:
+                applicationTasks.currentTask.currentStep = applicationTasks.currentTask.totalSteps + 1; // because we subtract one from it
+                applicationTasks.currentTask.taskStatus = TaskStatus.Stepping;
+                break;
+        }
+
+        // redirect to the current task's url
+        routerProvider.navigateToTaskUrl(applicationTasks.currentTask, ApplicationTasks.DIRECTION_BACKWARDS, lastStatus);
+    }
+
+    // /**
+    //  * Get currently active task - may be undefined or null!
+    //  */
+    // public get activeTask(): Task { return this.currentTask; }
+    
+    // /**
+    //  * Set currently active task
+    //  */
+    // public set activeTask( t: Task ) { this.currentTask = t; }
+
+    /**
+     * Complete the current task
+     */
+    private completeCurrentTask(applicationTasks: ApplicationTasks): void {
+        console.info(`Completing task ${applicationTasks.currentTask.name}`);
+        applicationTasks.currentTask.taskStatus = TaskStatus.Complete;
+        applicationTasks.currentTask.complete = true;
+
+        // TODO: Update server
+
+        this.getNextTask(applicationTasks);
+
+        // Ensure the next task is the correct one!
+        applicationTasks.currentTask = applicationTasks.nextTaskInQueue;
+
+        console.info(`Got new current task: ${applicationTasks.currentTask.name}`);
+    }
+
+    /**
+     * Get the first matching task. If there is a priority override,
+     * then that is the one to use
+     * @TODO - Copy business rule logic
+     */
+    private getFirstMatchingTask(applicationTasks: ApplicationTasks) : Task {
+        let t: Task;
+
+        // Which task list should we be using?
+        let candidates = applicationTasks.overrideTasks ? applicationTasks.overrideTasks.slice(0) : applicationTasks.tasks.slice(0);
+
+        if( candidates.length > 0 ) {
+            console.debug(`Got ${candidates.length} candidate tasks`);
+
+            // Find the first valid item in the candidate array
+            t = candidates.find( t => this.taskValidForRules(t) && !t.complete );
+            
+            t.taskStatus = t.introTemplate != TaskIntroTemplate.None ? TaskStatus.Intro : TaskStatus.Stepping;
+        } else {
+            throw new Error("No tasks to find a match for!");
+        }
+    
+        return t;
+    }
+
+    private taskValidForRules( t: Task ): boolean {
+        return true;
+    }
+
+    /* End of applicationTasks migrated code */
 
     private updateCurrentStatus(): void {
         this._trackerTaskEventSource.next( new TrackerTaskEvent({activeTask: this.activeTask, currentStep: this.currentStep, totalSteps: this.totalSteps, percentComplete: this.currentPercentComplete}));

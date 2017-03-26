@@ -3,16 +3,16 @@ import { Task } from './task';
 export class TaskIntro {
 
     constructor( options: { 
-        task: Task,
+        taskId: number,
         bodyText: string,
         image?: string
     }) {
-        this.task = options.task;
+        this.taskId = options.taskId;
         this.bodyText = options.bodyText;
         this.image = options.image || 'some-default.png';
     }
 
-    task: Task;
+    taskId: number;
     bodyText: string;
     image: string;
 }
