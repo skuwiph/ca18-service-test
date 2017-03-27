@@ -13,24 +13,15 @@ export class BusinessRuleService {
     constructor( private http: Http ) { }
 
     public getCurrentRules(): BusinessRule[] {
-        console.log(`Getting current ruleset`);
-
-        let rules: BusinessRule[] = this.getRulesFromStorage();
+        let rules: BusinessRule[] = [];//this.getRulesFromStorage();
 
         // Read from Http if null;
-        if( rules == null ) {
-            console.debug(`Reading Http for rules will be necessary`);
-
-            // TODO(ian): Narf. No rules yet!
-            //rules = this.createTestRuleset();
-
-            this.getRulesFromServer().subscribe( data => {
-                console.info(`Data: ${data}`);
+        this.getRulesFromServer()
+            .subscribe( data => {
                 this.rules = data;
                 localStorage.setItem("rules", JSON.stringify(this.rules));
-             },
-             err => console.error(`Getting rules failed: ${err}`));
-        }
+            },
+            err => console.error(`Getting rules failed: ${err}`));
 
         return rules;
     }
@@ -76,20 +67,6 @@ export class BusinessRuleService {
         throw new Error(`No rule with the name '${name}' found!`);
     }
 
-    private getRulesFromStorage() : BusinessRule[] {
-        let rules: BusinessRule[] = [];
-
-        // TODO(ian): localStorage 
-        if( localStorage.getItem("rules") ) {
-            console.log("No rules stored");
-            return null;
-        }
-
-        rules = JSON.parse(localStorage.getItem("rules"));
-
-        return rules;
-    }    
-
     private getRulesFromServer(): Observable<BusinessRule[]> {
         console.info(`getRulesFromServer`);
 
@@ -99,9 +76,31 @@ export class BusinessRuleService {
     }
 
     private extractData(res: Response) {
-        let body = res.json();
-        return body || [];
+        let inLocalStorage = localStorage.getItem("rules");
+
+        if( res.status == 304 && inLocalStorage ) {
+            console.debug(`Rules return a 304 and are already in localStorage`);
+            return this.getRulesFromStorage();
+        } else {
+            console.debug(`Rules do not 304 or are not in localStorage`);
+            let body = res.json();
+            return body || [];
+        }
     }
+
+    private getRulesFromStorage() : BusinessRule[] {
+        let rules: BusinessRule[] = [];
+
+        // TODO(ian): localStorage 
+        if( !localStorage.getItem("rules") ) {
+            console.log("No rules stored");
+            return null;
+        }
+
+        rules = JSON.parse(localStorage.getItem("rules"));
+
+        return rules;
+    }    
 
     private handleError (error: Response | any) {
         // In a real world app, you might use a remote logging infrastructure
