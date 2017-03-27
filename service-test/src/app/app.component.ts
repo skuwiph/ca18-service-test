@@ -12,11 +12,9 @@ export class AppComponent {
   wsy: number;
 
   constructor(private window: WindowSize) {
-      console.log("AppComponent");
   }
 
   ngOnInit() {
-      console.log("AppComponent::OnInit");
       this.window.height$.subscribe(
         h => this.wsy = h);
       this.window.width$.subscribe(

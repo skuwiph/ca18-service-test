@@ -45,6 +45,7 @@ export class TrackerService implements ITaskRouterProvider {
         //         console.info( `Active task by path is: ${this.applicationTasks.currentTask.name}`);
         // }
 
+        this.rules.getCurrentRules();
 
         // For safety during development, let's force a redirect to homepage
         this.router.navigateByUrl('/home');
@@ -63,9 +64,7 @@ export class TrackerService implements ITaskRouterProvider {
         ).subscribe(
         data => {
             this.applicationTasks = new ApplicationTasks();
-            console.info(`sequences:`);
             this.sequences = <Array<Sequence>>(data[0]);
-            console.info(`tasks:`);
             this.applicationTasks.tasks = <Array<Task>>(data[1]);
             this.taskIntros = <Array<TaskIntro>>(data[2]);
             this.taskOutros = <Array<TaskOutro>>(data[3]);;

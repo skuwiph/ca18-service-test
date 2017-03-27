@@ -8,7 +8,7 @@
 
         <input *ngSwitchCase="'email'" [id]="question.key" class="form-control" [formControlName]="question.key" [type]="question.controlType" placeholder="{{question.label}}" (input)="onTextChange($event)">
 
-        <textarea *ngSwitchCase="'multiline'" [id]="question.key" class="form-control" [formControlName]="question.key" (change)="onTextChange($event)"></textarea>
+        <textarea *ngSwitchCase="'multiline'" [id]="question.key" class="form-control" [formControlName]="question.key" (change)="onTextChange($event)" (input)="onTextChange($event)"></textarea>
 
         <select *ngSwitchCase="'dropdown'" [id]="question.key" class="form-control" [formControlName]="question.key" (change)="onTextChange($event)">
             <option *ngFor="let opt of question.options" [value]="opt.code" [selected]="isSelected(opt)">{{opt.description}}</option>

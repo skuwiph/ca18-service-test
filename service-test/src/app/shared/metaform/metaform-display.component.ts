@@ -67,7 +67,7 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
 
         if( overrideCurrentQuestion ){
             this.currentQuestion = this.form.totalQuestionCount - 2;
-            console.info(`Overriding start question -- showing question ${this.currentQuestion} out of ${this.form.totalQuestionCount}`);
+            // console.info(`Overriding start question -- showing question ${this.currentQuestion} out of ${this.form.totalQuestionCount}`);
         }
 
         this.tracker.setActiveTask(t);
@@ -82,9 +82,7 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
         let p = 0;
 
         p = ( this.currentQuestion + 1 ) / ( this.form.totalQuestionCount + 1) * 100;
-        console.debug(`MetaformDisplayComponent->Complete: ${p}% ( ${this.currentQuestion}/${this.form.totalQuestionCount} )`);
-
-        //console.info(`CurrentStep: ${this.tracker.activeTask.currentStep}. Total: ${this.tracker.activeTask.totalSteps}`);
+        // console.debug(`MetaformDisplayComponent->Complete: ${p}% ( ${this.currentQuestion}/${this.form.totalQuestionCount} )`);
 
         return [p, this.currentQuestion + 1, this.form.totalQuestionCount + 1];
     }
@@ -102,8 +100,6 @@ export class MetaformDisplayComponent extends TrackedTaskComponent implements On
     private displayQuestions( forward = true ) {
         // TODO(ian): override display type 
         this.isMobile = true;
-
-        console.info(`current question to display: ${this.currentQuestion}`);
 
         let result = this.formService.getNextQuestionBlock(this.form, this.applicationService, this.isMobile, this.currentQuestion, forward);
 

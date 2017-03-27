@@ -1,0 +1,24 @@
+[
+  {
+    "parts": [
+      {
+        "name": "heartbroken",
+        "comparison": 1,
+        "value": "Y"
+      }
+    ],
+    "name": "ReadyToBeHeartbroken",
+    "matchType": 1
+  },
+  {
+    "parts": [
+      {
+        "name": "heartbroken",
+        "comparison": 2,
+        "value": "Y"
+      }
+    ],
+    "name": "Test String Rule",
+    "matchType": 1
+  }
+]
