@@ -1,6 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
 import { TestBed, async, inject } from '@angular/core/testing';
+
+
+import { HttpModule } from '@angular/http';
+
 import { BusinessRuleService } from './business-rule.service';
 import { BusinessRule, BusinessRulePart, RuleComparison, RuleMatchType, IBusinessRuleData } from './business-rule';
 
@@ -22,6 +26,10 @@ class DataSourceForTest implements IBusinessRuleData {
         if( name === 'time' ) return new Date(2017, 1, 1, 10, 59, 0, 0);
         if( name === 'number' ) return 5;
     }
+    
+    setValue( name: string, value: any ) {
+
+    }
 }
 
 describe('BusinessRuleService', () => {
@@ -30,18 +38,19 @@ describe('BusinessRuleService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [HttpModule],
             providers: [BusinessRuleService]
         });
     });
 
-    beforeAll( () => {
+    beforeAll( inject([BusinessRuleService], (service: BusinessRuleService) => {
         allRules = [];
-        allRules.push( createStringRule() );
-        allRules.push( createDateRule( 'Date Equality Rule' ) );
-        allRules.push( createDateRangeRule("Date Between Rule", "time", new Date(2017,1,1, 10, 45, 0, 0), new Date(2017,1,1, 11, 45, 0, 0)))
-        allRules.push( createNumericRangeRule("Number Between Rule", "number", 4, 6 ) );
-        allRules.push( createAllMatchStringRule() );
-    });
+        allRules.push( createStringRule(service) );
+        allRules.push( createDateRule( service, 'Date Equality Rule' ) );
+        allRules.push( createDateRangeRule(service, "Date Between Rule", "time", new Date(2017,1,1, 10, 45, 0, 0), new Date(2017,1,1, 11, 45, 0, 0)))
+        allRules.push( createNumericRangeRule(service, "Number Between Rule", "number", 4, 6 ) );
+        allRules.push( createAllMatchStringRule(service) );
+    }));
 
     it('should evaluate a string rule...', inject([BusinessRuleService], (service: BusinessRuleService) => {
         service.setRules(allRules);
@@ -65,7 +74,7 @@ describe('BusinessRuleService', () => {
 
     it('should disallow duplicate rules names...', inject([BusinessRuleService], (service: BusinessRuleService) => {
         var duplicateRules: BusinessRule[] = allRules.slice(); // Must copy by value 
-        duplicateRules.push( createStringRule() );
+        duplicateRules.push( createStringRule(service) );
         expect( function() { service.setRules(duplicateRules); } ).toThrow( new Error("BusinessRule: The rule 'Test String Rule' already exists in this ruleset!") ;
     }));  
 
@@ -77,7 +86,7 @@ describe('BusinessRuleService', () => {
             
 });
 
-function createStringRule() : BusinessRule {
+function createStringRule(service: BusinessRuleService) : BusinessRule {
         let part = new BusinessRulePart();
         part.name = 'string';
         part.comparison = RuleComparison.Equals;
@@ -86,12 +95,12 @@ function createStringRule() : BusinessRule {
         let r = new BusinessRule();
         r.matchType = RuleMatchType.All;
         r.name = 'Test String Rule';
-        r.addPart( part );
+        service.addPart( r, part );
 
         return r;
 }
 
-function createAllMatchStringRule() : BusinessRule {
+function createAllMatchStringRule(service: BusinessRuleService) : BusinessRule {
         let p1 = new BusinessRulePart();
         p1.name = 'string1';
         p1.comparison = RuleComparison.Equals;
@@ -105,13 +114,14 @@ function createAllMatchStringRule() : BusinessRule {
         let r = new BusinessRule();
         r.matchType = RuleMatchType.All;
         r.name = 'Test String Rule MatchType ALL';
-        r.addPart( p1 );
-        r.addPart( p2 );
+
+        service.addPart( r, p1 );
+        service.addPart( r, p2 );
 
         return r;
 }
 
-function createDateRule(name: string ) : BusinessRule {
+function createDateRule(service: BusinessRuleService, name: string ) : BusinessRule {
         let part = new BusinessRulePart();
         part.name = 'date';
         part.comparison = RuleComparison.Equals;
@@ -120,12 +130,13 @@ function createDateRule(name: string ) : BusinessRule {
         let r = new BusinessRule();
         r.matchType = RuleMatchType.All;
         r.name = name;
-        r.addPart( part );
+
+        service.addPart( r, part );
     
         return r;
 }
 
-function createDateRangeRule(name: string, n1: string, lv: Date, uv: Date ) : BusinessRule {
+function createDateRangeRule(service: BusinessRuleService, name: string, n1: string, lv: Date, uv: Date ) : BusinessRule {
         let part = new BusinessRulePart();
         part.name = n1;
         part.comparison = RuleComparison.Between;
@@ -135,12 +146,13 @@ function createDateRangeRule(name: string, n1: string, lv: Date, uv: Date ) : Bu
         let r = new BusinessRule();
         r.matchType = RuleMatchType.Any;
         r.name = name;
-        r.addPart( part );
+
+        service.addPart( r, part );
     
         return r;
 }
 
-function createNumericRangeRule(name: string, n1: string, lv: number, uv: number ) : BusinessRule {
+function createNumericRangeRule(service: BusinessRuleService, name: string, n1: string, lv: number, uv: number ) : BusinessRule {
         let part = new BusinessRulePart();
         part.name = n1;
         part.comparison = RuleComparison.Between;
@@ -150,7 +162,8 @@ function createNumericRangeRule(name: string, n1: string, lv: number, uv: number
         let r = new BusinessRule();
         r.matchType = RuleMatchType.Any;
         r.name = name;
-        r.addPart( part );
+
+        service.addPart( r, part );
     
         return r;
 }
